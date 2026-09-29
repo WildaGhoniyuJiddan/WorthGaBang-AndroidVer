@@ -107,6 +107,15 @@
                "score": 82.5, "verdict": "wajar", "created_at": "..." } ] }
 ```
 
+#### POST /api/v1/history (Auth) — B10: backup/sync hash-chain dari app
+```jsonc
+// request
+{ "mode": "pc", "query": "RTX 4060", "input_price": 4500000,
+  "score": 82.5, "verdict": "wajar", "created_at": "2026-09-29T10:00:00Z" }  // created_at opsional
+// response 201 → item history yang tersimpan (bentuk sama seperti GET)
+// Dipakai T6 (sync opsional) & T15 (antrean offline): app push entri hash-chain lokal.
+```
+
 #### GET /api/v1/wishlist (Auth) → `{items: [{id, query, mode, target_price?, created_at}]}`
 #### POST /api/v1/wishlist (Auth) `{query, mode, target_price?}` → 201 item
 #### DELETE /api/v1/wishlist/{id} (Auth) → 204
