@@ -30,4 +30,19 @@ abstract final class AppStrings {
   static const verdictWorthIt = 'Worth It';
   static const verdictFair = 'Wajar';
   static const verdictOverpriced = 'Kemahalan';
+
+  // Auth (T2).
+  static const loginTitle = 'Masuk';
+  static const registerTitle = 'Daftar Akun';
+  static const nameLabel = 'Nama';
+  static const nameRequired = 'Nama wajib diisi';
+  static const emailLabel = 'Email';
+  static const emailInvalid = 'Format email tidak valid';
+  static const passwordLabel = 'Kata sandi';
+  static const passwordMin = 'Minimal 8 karakter';
+  static const loginButton = 'Masuk';
+  static const registerButton = 'Daftar';
+  static const goToRegister = 'Belum punya akun? Daftar di sini';
+  static const goToLogin = 'Sudah punya akun? Masuk di sini';
+  static const biometricButton = 'Masuk dengan sidik jari';
 }

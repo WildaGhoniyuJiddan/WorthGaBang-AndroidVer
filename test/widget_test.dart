@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/app/app.dart';
+import 'package:worthbang/features/auth/data/auth_models.dart';
+import 'package:worthbang/features/auth/presentation/auth_controller.dart';
 import 'package:worthbang/l10n/strings.dart';
+
+/// Stub auth: langsung authenticated agar guard router tidak redirect ke /login.
+class _FakeAuthController extends AuthController {
+  @override
+  AuthState build() => const AuthState(
+        status: AuthStatus.authenticated,
+        user: AppUser(id: 1, name: 'Dan', email: 'dan@example.com'),
+      );
+}
 
 /// Widget test bottom-nav shell (T0):
 /// - 4 tab tampil dengan label Bahasa Indonesia.
@@ -19,9 +30,16 @@ void main() {
         matching: find.text(label),
       );
 
+  ProviderScope app() => ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(_FakeAuthController.new),
+        ],
+        child: const WorthBangApp(),
+      );
+
   testWidgets('BottomNavShell menampilkan 4 tab dan berpindah tab',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: WorthBangApp()));
+    await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
     // Empat label tab dalam Bahasa Indonesia ada di NavigationBar.
@@ -56,7 +74,7 @@ void main() {
 
   testWidgets('NavigationBar punya tepat 4 destination',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: WorthBangApp()));
+    await tester.pumpWidget(app());
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);

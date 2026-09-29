@@ -10,14 +10,15 @@ class WorthBangApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'WorthBang',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      // Ikuti tema sistem; user bisa override nanti dari Profil (T6).
+      // Ikuti tema sistem; user bisa override nanti dari Profil (T14).
       themeMode: ThemeMode.system,
-      routerConfig: appRouter,
+      routerConfig: router,
       // Semua string hardcode berbahasa Indonesia, terpusat di lib/l10n.
       locale: const Locale('id', 'ID'),
     );

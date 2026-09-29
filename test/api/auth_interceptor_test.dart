@@ -2,57 +2,11 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/core/network/api_exception.dart';
 import 'package:worthbang/core/network/dio_api_client.dart';
 import 'package:worthbang/core/secure/token_storage.dart';
 
-/// Secure storage in-memory untuk test (tanpa platform channel).
-class _MemorySecureStorage extends FlutterSecureStorage {
-  final Map<String, String> _map = {};
-
-  @override
-  Future<String?> read({
-    required String key,
-    AppleOptions? iOptions,
-    AndroidOptions? aOptions,
-    LinuxOptions? lOptions,
-    WebOptions? webOptions,
-    AppleOptions? mOptions,
-    WindowsOptions? wOptions,
-  }) async =>
-      _map[key];
-
-  @override
-  Future<void> write({
-    required String key,
-    required String? value,
-    AppleOptions? iOptions,
-    AndroidOptions? aOptions,
-    LinuxOptions? lOptions,
-    WebOptions? webOptions,
-    AppleOptions? mOptions,
-    WindowsOptions? wOptions,
-  }) async {
-    if (value == null) {
-      _map.remove(key);
-    } else {
-      _map[key] = value;
-    }
-  }
-
-  @override
-  Future<void> deleteAll({
-    AppleOptions? iOptions,
-    AndroidOptions? aOptions,
-    LinuxOptions? lOptions,
-    WebOptions? webOptions,
-    AppleOptions? mOptions,
-    WindowsOptions? wOptions,
-  }) async =>
-      _map.clear();
-}
 
 /// Adapter HTTP palsu: kembalikan response sesuai skenario test.
 class _FakeAdapter implements HttpClientAdapter {
@@ -88,7 +42,7 @@ void main() {
   group('Auth interceptor (DioApiClient)', () {
     test('401 → refresh sekali → retry request asli dengan token baru',
         () async {
-      final storage = TokenStorage(_MemorySecureStorage());
+      final storage = TokenStorage(MemorySecureKv());
       await storage.saveTokens(
         accessToken: 'access-lama',
         refreshToken: 'refresh-valid',
@@ -140,7 +94,7 @@ void main() {
 
     test('refresh gagal (401) → token dihapus & event logout terpancar',
         () async {
-      final storage = TokenStorage(_MemorySecureStorage());
+      final storage = TokenStorage(MemorySecureKv());
       await storage.saveTokens(
         accessToken: 'access-lama',
         refreshToken: 'refresh-basi',
@@ -185,7 +139,7 @@ void main() {
     });
 
     test('endpoint auth publik tidak dikirim Authorization header', () async {
-      final storage = TokenStorage(_MemorySecureStorage());
+      final storage = TokenStorage(MemorySecureKv());
       await storage.saveTokens(
         accessToken: 'access-ada',
         refreshToken: 'refresh-ada',
