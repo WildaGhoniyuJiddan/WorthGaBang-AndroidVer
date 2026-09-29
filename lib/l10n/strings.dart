@@ -113,4 +113,23 @@ abstract final class AppStrings {
   static const amountLabel = 'Nominal (IDR)';
   static const toLabel = 'Ke';
   static const fromLabel = 'Dari';
+
+  // Wishlist & alert (T11).
+  static const wishlistTitle = 'Wishlist & Alert';
+  static const wishlistTab = 'Wishlist';
+  static const alertsTab = 'Alert Harga';
+  static const wishlistEmpty =
+      'Wishlist kosong. Simpan dari hasil cek harga.';
+  static const alertsEmpty =
+      'Belum ada alert. Buat dari hasil cek harga.';
+  static const addWishlist = 'Simpan ke wishlist';
+  static const wishlistAdded = 'Tersimpan ke wishlist.';
+  static const addAlert = 'Buat alert harga';
+  static const alertAdded = 'Alert harga dibuat. Kami cek tiap 15 menit.';
+  static const targetPriceLabel = 'Target harga';
+  static const cancelButton = 'Batal';
+  static const saveButton = 'Simpan';
+  static const checkAlertsNow = 'Cek alert sekarang';
+  static const alertCheckNone =
+      'Tidak ada alert yang terpicu saat ini.';
 }

@@ -1,5 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
+
+import '../../features/alerts/data/alert_check_service.dart';
+import '../../features/alerts/data/alerts_api.dart';
+import '../../features/price_check/data/price_check_api.dart';
+import '../network/dio_api_client.dart';
+import '../secure/token_storage.dart';
 
 /// Nama task & tag untuk pengecekan price alert berkala.
 const String priceAlertTaskName = 'worthbang.priceAlertCheck';
@@ -11,10 +20,24 @@ void workmanagerCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     switch (task) {
       case priceAlertTaskName:
-        // T7: baca price_alerts aktif dari Drift, bandingkan harga terbaru,
-        // kirim notifikasi bila <= target. Untuk T1: no-op sukses.
-        debugPrint('WorthBang: price alert check berjalan.');
-        return true;
+        try {
+          // Rakit dependensi manual (tanpa Riverpod — isolate terpisah).
+          final client = DioApiClient(tokenStorage: TokenStorage());
+          final prefs = await SharedPreferences.getInstance();
+          final service = AlertCheckService(
+            alertsApi: AlertsApi(client),
+            priceCheckApi: PriceCheckApi(client),
+            notifier: LocalNotificationAlertNotifier(),
+            dedup: SharedPrefsDedupStore(prefs),
+          );
+          final n = await service.checkNow();
+          debugPrint('WorthBang: price alert check selesai, $n terpicu.');
+          client.close();
+          return true;
+        } catch (e) {
+          debugPrint('WorthBang: price alert check gagal: $e');
+          return false;
+        }
     }
     return true;
   });
@@ -32,4 +55,19 @@ Future<void> initWorkManager() async {
     frequency: const Duration(minutes: 15),
     constraints: Constraints(networkType: NetworkType.connected),
   );
+}
+
+/// Fallback foreground: cek tiap 15 menit selagi app terbuka.
+/// Dipakai bersama WorkManager (dedup mencegah notif ganda).
+Timer startForegroundAlertChecker({
+  required AlertCheckService service,
+  Duration interval = const Duration(minutes: 15),
+}) {
+  return Timer.periodic(interval, (_) async {
+    try {
+      await service.checkNow();
+    } catch (e) {
+      debugPrint('WorthBang: foreground alert check gagal: $e');
+    }
+  });
 }

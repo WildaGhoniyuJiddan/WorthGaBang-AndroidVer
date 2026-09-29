@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/rupiah.dart';
 import '../../../core/widgets/verdict_badge.dart';
 import '../../../l10n/strings.dart';
+import '../../alerts/data/alerts_api.dart';
 import '../../trends/presentation/trends_screen.dart';
+import '../../wishlist/data/wishlist_api.dart';
 import '../data/models.dart';
 
 /// Layar hasil analisis: verdict, skor, rentang wajar, pembanding, alternatif.
@@ -21,7 +23,41 @@ class ResultScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final r = result;
     return Scaffold(
-      appBar: AppBar(title: Text(r.query)),
+      appBar: AppBar(
+        title: Text(r.query),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_outline),
+            tooltip: AppStrings.addWishlist,
+            onPressed: () async {
+              try {
+                await ref.read(wishlistApiProvider).addWishlist(
+                      query: r.query,
+                      mode: r.mode,
+                      targetPrice: r.inputPrice,
+                    );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text(AppStrings.wishlistAdded)),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString())),
+                  );
+                }
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.notification_add_outlined),
+            tooltip: AppStrings.addAlert,
+            onPressed: () => _showAlertDialog(context, ref, r),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -138,5 +174,58 @@ class ResultScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Dialog buat price alert: input target harga → POST /api/v1/alerts.
+Future<void> _showAlertDialog(
+    BuildContext context, WidgetRef ref, AnalysisResult r) async {
+  final target = TextEditingController(
+      text: r.referencePrice?.toString() ?? r.inputPrice.toString());
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text(AppStrings.addAlert),
+      content: TextField(
+        controller: target,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(
+          labelText: AppStrings.targetPriceLabel,
+          prefixText: 'Rp ',
+        ),
+        autofocus: true,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text(AppStrings.cancelButton),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text(AppStrings.saveButton),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final price =
+      int.tryParse(target.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+  if (price <= 0) return;
+  try {
+    await ref.read(alertsApiProvider).addAlert(
+          query: r.query,
+          mode: r.mode,
+          targetPrice: price,
+        );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.alertAdded)),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 }

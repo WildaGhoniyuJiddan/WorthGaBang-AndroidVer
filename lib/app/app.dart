@@ -1,15 +1,52 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/notifications/work_manager.dart';
+import '../features/alerts/data/alert_check_service.dart';
 import 'router.dart';
 import 'theme.dart';
 
 /// Root widget aplikasi WorthBang.
-class WorthBangApp extends ConsumerWidget {
+class WorthBangApp extends ConsumerStatefulWidget {
   const WorthBangApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorthBangApp> createState() => _WorthBangAppState();
+}
+
+class _WorthBangAppState extends ConsumerState<WorthBangApp> {
+  Timer? _alertTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fallback foreground: cek alert tiap 15 menit selagi app terbuka.
+    // (Di widget test, provider di-override — timer tetap jalan tapi
+    // checkNow memakai FakeApiClient bila di-override.)
+    _startChecker();
+  }
+
+  Future<void> _startChecker() async {
+    try {
+      final service = await ref.read(alertCheckServiceProvider.future);
+      if (mounted) {
+        _alertTimer = startForegroundAlertChecker(service: service);
+      }
+    } catch (_) {
+      // Mis. SharedPreferences belum siap di test — abaikan.
+    }
+  }
+
+  @override
+  void dispose() {
+    _alertTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'WorthBang',

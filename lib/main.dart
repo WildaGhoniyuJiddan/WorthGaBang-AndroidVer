@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'app/app.dart';
+import 'core/notifications/notification_service.dart';
 import 'core/notifications/work_manager.dart';
 
 /// Entry point aplikasi WorthBang.
@@ -12,7 +13,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Default locale Indonesia untuk formatter intl (Rp, tanggal).
   Intl.defaultLocale = 'id_ID';
-  // Background check price alert tiap 15 menit (T1: registrasi saja).
+  // Background check price alert tiap 15 menit (T11: WorkManager).
   await initWorkManager();
+  // Notifikasi lokal untuk price alert.
+  await NotificationService.instance.init();
   runApp(const ProviderScope(child: WorthBangApp()));
 }
