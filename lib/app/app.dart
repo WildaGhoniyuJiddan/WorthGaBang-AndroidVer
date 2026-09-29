@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/network/connectivity_service.dart';
 import '../core/notifications/work_manager.dart';
 import '../features/alerts/data/alert_check_service.dart';
 import '../features/profile/data/profile_api.dart';
+import '../features/sync/data/sync_queue.dart';
+import '../features/sync/data/sync_service.dart';
 import 'router.dart';
 import 'theme.dart';
 
@@ -27,6 +30,18 @@ class _WorthBangAppState extends ConsumerState<WorthBangApp> {
     // (Di widget test, provider di-override — timer tetap jalan tapi
     // checkNow memakai FakeApiClient bila di-override.)
     _startChecker();
+    // T15: sinkronkan antrian mutasi offline saat app dibuka.
+    _syncPending();
+  }
+
+  Future<void> _syncPending() async {
+    try {
+      await ref.read(syncServiceProvider).syncPending();
+      ref.invalidate(pendingCountProvider);
+      ref.invalidate(lastSyncAtProvider);
+    } catch (_) {
+      // Gagal (mis. masih offline) — antrian tetap tersimpan.
+    }
   }
 
   Future<void> _startChecker() async {
@@ -48,6 +63,10 @@ class _WorthBangAppState extends ConsumerState<WorthBangApp> {
 
   @override
   Widget build(BuildContext context) {
+    // T15: setiap kali koneksi pulih, kirim antrian mutasi offline.
+    ref.listen(isOfflineProvider, (wasOffline, isOffline) {
+      if (wasOffline == true && isOffline == false) _syncPending();
+    });
     final router = ref.watch(routerProvider);
     final themeMode =
         ref.watch(settingsControllerProvider).orDefault.themeMode;

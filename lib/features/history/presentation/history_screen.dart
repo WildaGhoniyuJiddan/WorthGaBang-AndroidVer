@@ -8,6 +8,8 @@ import '../../../core/widgets/verdict_badge.dart';
 import '../../../l10n/strings.dart';
 import '../../price_check/data/models.dart';
 import '../../price_check/presentation/price_check_screen.dart';
+import '../../sync/data/sync_queue.dart';
+import '../../sync/data/sync_service.dart';
 import 'verify_screen.dart';
 
 /// Tab Riwayat: daftar analisis tersimpan (offline-first, Drift) + verifikasi.
@@ -31,25 +33,43 @@ class _HistoryListScreenState extends ConsumerState<HistoryListScreen> {
   }
 
   Future<void> _reload() async {
-    final blocks =
-        await ref.read(historyRepositoryProvider).latest();
-    if (mounted) {
+    try {
+      final blocks =
+          await ref.read(historyRepositoryProvider).latest();
+      if (!mounted) return;
       setState(() {
         _blocks = blocks;
         _loading = false;
       });
+    } catch (_) {
+      // DB lokal gagal dibaca — tampilkan list kosong, bukan spinner abadi.
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _sync() async {
     setState(() => _syncing = true);
-    final sent =
-        await ref.read(historyRepositoryProvider).syncToServer();
-    if (!mounted) return;
-    setState(() => _syncing = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Terkirim $sent riwayat ke server')),
-    );
+    try {
+      final sent =
+          await ref.read(historyRepositoryProvider).syncToServer();
+      final rest =
+          await ref.read(syncServiceProvider).syncPending();
+      ref.invalidate(pendingCountProvider);
+      ref.invalidate(lastSyncAtProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text(AppStrings.syncHistoryDone(sent, rest))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+    }
   }
 
   @override
@@ -85,41 +105,79 @@ class _HistoryListScreenState extends ConsumerState<HistoryListScreen> {
               : RefreshIndicator(
                   onRefresh: _reload,
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: _blocks.length,
+                    padding: EdgeInsets.zero,
+                    itemCount: _blocks.length + 1,
                     itemBuilder: (context, i) {
-                      final b = _blocks[i];
-                      return Card(
-                        child: ListTile(
-                          title: Text(b.query,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          subtitle: Text(
-                            '${DateFormat('d MMM yyyy HH:mm', 'id_ID').format(b.createdAt.toLocal())}'
-                            ' • blok #${b.id}'
-                            '${b.hash.isEmpty ? ' (legacy)' : ''}',
-                          ),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              VerdictBadge(
-                                  verdict: verdictFromString(b.verdict)),
-                              const SizedBox(height: 4),
-                              Text(formatRupiah(b.inputPrice),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const VerifyScreen()),
+                      if (i == 0) return const _LastSyncHeader();
+                      final b = _blocks[i - 1];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        child: Card(
+                          child: ListTile(
+                            title: Text(b.query,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                            subtitle: Text(
+                              '${DateFormat('d MMM yyyy HH:mm', 'id_ID').format(b.createdAt.toLocal())}'
+                              ' \u2022 blok #${b.id}'
+                              '${b.hash.isEmpty ? ' (legacy)' : ''}',
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.center,
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.end,
+                              children: [
+                                VerdictBadge(
+                                    verdict:
+                                        verdictFromString(b.verdict)),
+                                const SizedBox(height: 4),
+                                Text(formatRupiah(b.inputPrice),
+                                    style: const TextStyle(
+                                        fontWeight:
+                                            FontWeight.bold)),
+                              ],
+                            ),
+                            onTap: () =>
+                                Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const VerifyScreen()),
+                            ),
                           ),
                         ),
                       );
                     },
                   ),
                 ),
+    );
+  }
+}
+
+/// Baris "Terakhir diperbarui" (T15): waktu sinkron sukses terakhir.
+class _LastSyncHeader extends ConsumerWidget {
+  const _LastSyncHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lastSync = ref.watch(lastSyncAtProvider).value;
+    final text = lastSync == null
+        ? AppStrings.neverSynced
+        : AppStrings.lastUpdated(
+            DateFormat('d MMM yyyy HH:mm', 'id_ID')
+                .format(lastSync.toLocal()));
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_done_outlined, size: 14),
+          const SizedBox(width: 6),
+          Text(text,
+              style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
     );
   }
 }

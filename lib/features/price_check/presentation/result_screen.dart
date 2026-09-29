@@ -5,6 +5,8 @@ import '../../../core/utils/rupiah.dart';
 import '../../../core/widgets/verdict_badge.dart';
 import '../../../l10n/strings.dart';
 import '../../alerts/data/alerts_api.dart';
+import '../../sync/data/sync_queue.dart';
+import '../../sync/data/sync_service.dart';
 import '../../trends/presentation/trends_screen.dart';
 import '../../wishlist/data/wishlist_api.dart';
 import '../data/models.dart';
@@ -31,17 +33,30 @@ class ResultScreen extends ConsumerWidget {
             tooltip: AppStrings.addWishlist,
             onPressed: () async {
               try {
-                await ref.read(wishlistApiProvider).addWishlist(
-                      query: r.query,
-                      mode: r.mode,
-                      targetPrice: r.inputPrice,
-                    );
+                final outcome =
+                    await ref.read(syncServiceProvider).runOrQueue(
+                          kind: 'wishlist',
+                          payload: {
+                            'query': r.query,
+                            'mode': r.mode,
+                            'target_price': r.inputPrice,
+                          },
+                          action: () =>
+                              ref.read(wishlistApiProvider).addWishlist(
+                                    query: r.query,
+                                    mode: r.mode,
+                                    targetPrice: r.inputPrice,
+                                  ),
+                        );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text(AppStrings.wishlistAdded)),
+                    SnackBar(
+                        content: Text(outcome == SyncOutcome.sent
+                            ? AppStrings.wishlistAdded
+                            : AppStrings.queuedForSync)),
                   );
                 }
+                ref.invalidate(pendingCountProvider);
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -212,16 +227,28 @@ Future<void> _showAlertDialog(
       int.tryParse(target.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
   if (price <= 0) return;
   try {
-    await ref.read(alertsApiProvider).addAlert(
-          query: r.query,
-          mode: r.mode,
-          targetPrice: price,
+    final outcome = await ref.read(syncServiceProvider).runOrQueue(
+          kind: 'alert',
+          payload: {
+            'query': r.query,
+            'mode': r.mode,
+            'target_price': price,
+          },
+          action: () => ref.read(alertsApiProvider).addAlert(
+                query: r.query,
+                mode: r.mode,
+                targetPrice: price,
+              ),
         );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.alertAdded)),
+        SnackBar(
+            content: Text(outcome == SyncOutcome.sent
+                ? AppStrings.alertAdded
+                : AppStrings.queuedForSync)),
       );
     }
+    ref.invalidate(pendingCountProvider);
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context)

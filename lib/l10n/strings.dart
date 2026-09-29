@@ -171,4 +171,17 @@ abstract final class AppStrings {
   static const logoutTitle = 'Keluar';
   static const logoutConfirm = 'Yakin ingin keluar dari akun?';
   static const logoutButton = 'Keluar';
+
+  // Offline & sinkronisasi (T15).
+  static const offlineBanner =
+      'Offline — data tersimpan lokal, mutasi dikirim saat online.';
+  static const queuedForSync =
+      'Offline — disimpan, otomatis dikirim saat online.';
+  static const pendingSync = 'Menunggu sinkron';
+  static const syncNowButton = 'Sinkronkan';
+  static const syncDone = 'Sinkron selesai. Sisa antrian';
+  static String syncHistoryDone(int sent, int rest) =>
+      'Terkirim $sent riwayat ke server • sisa antrian $rest';
+  static const neverSynced = 'Belum pernah disinkronkan';
+  static String lastUpdated(String when) => 'Terakhir diperbarui $when';
 }

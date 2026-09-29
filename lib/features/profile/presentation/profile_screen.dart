@@ -8,6 +8,8 @@ import '../../../app/providers.dart';
 import '../../../l10n/strings.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../sync/data/sync_queue.dart';
+import '../../sync/data/sync_service.dart';
 import '../data/profile_api.dart';
 
 /// Tab Profil: foto, nama, pengaturan (biometric/tilt/tema), feedback, logout.
@@ -120,16 +122,31 @@ class _ProfileContentScreenState
   Future<void> _sendFeedback() async {
     setState(() => _sendingFeedback = true);
     try {
-      await ref.read(profileApiProvider).sendFeedback(
-            rating: _rating,
-            kesan: _kesan.text.trim(),
-            saran: _saran.text.trim(),
-          );
+      final kesan = _kesan.text.trim();
+      final saran = _saran.text.trim();
+      final rating = _rating;
+      final outcome =
+          await ref.read(syncServiceProvider).runOrQueue(
+                kind: 'feedback',
+                payload: {
+                  'rating': rating,
+                  'kesan': kesan,
+                  'saran': saran,
+                },
+                action: () => ref
+                    .read(profileApiProvider)
+                    .sendFeedback(
+                        rating: rating, kesan: kesan, saran: saran),
+              );
       if (!mounted) return;
       _kesan.clear();
       _saran.clear();
+      ref.invalidate(pendingCountProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.feedbackSent)),
+        SnackBar(
+            content: Text(outcome == SyncOutcome.sent
+                ? AppStrings.feedbackSent
+                : AppStrings.queuedForSync)),
       );
     } catch (e) {
       if (mounted) {
@@ -329,6 +346,38 @@ class _ProfileContentScreenState
               icon: const Icon(Icons.send_outlined),
               label:
                   const Text(AppStrings.sendFeedbackButton),
+            ),
+            const SizedBox(height: 8),
+            Consumer(
+              builder: (context, ref, _) {
+                final pending =
+                    ref.watch(pendingCountProvider).value ?? 0;
+                if (pending == 0) return const SizedBox.shrink();
+                return ListTile(
+                  leading: const Icon(Icons.cloud_upload_outlined),
+                  title: Text(
+                      '${AppStrings.pendingSync}: $pending'),
+                  trailing: TextButton(
+                    onPressed: () async {
+                      final rest = await ref
+                          .read(syncServiceProvider)
+                          .syncPending();
+                      ref.invalidate(pendingCountProvider);
+                      ref.invalidate(lastSyncAtProvider);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  '${AppStrings.syncDone}: $rest')),
+                        );
+                      }
+                    },
+                    child:
+                        const Text(AppStrings.syncNowButton),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                );
+              },
             ),
             const SizedBox(height: 24),
             OutlinedButton.icon(

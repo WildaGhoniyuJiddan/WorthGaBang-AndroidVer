@@ -50,14 +50,24 @@ class CachedResults extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+/// Antrian mutasi offline (T15): aksi yang gagal karena jaringan,
+/// dikirim ulang saat online. kind: 'feedback' | 'wishlist' | 'alert'.
+class PendingMutations extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get kind => text()();
+  // Payload JSON sesuai kontrak endpoint tujuan.
+  TextColumn get payload => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 @DriftDatabase(
-  tables: [HistoryBlocks, WishlistItems, PriceAlerts, CachedResults],
+  tables: [HistoryBlocks, WishlistItems, PriceAlerts, CachedResults, PendingMutations],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -66,6 +76,9 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(historyBlocks, historyBlocks.dataJson);
             await m.addColumn(historyBlocks, historyBlocks.prevHash);
             await m.addColumn(historyBlocks, historyBlocks.hash);
+          }
+          if (from < 3) {
+            await m.createTable(pendingMutations);
           }
         },
       );

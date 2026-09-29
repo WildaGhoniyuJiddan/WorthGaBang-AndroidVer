@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:drift/drift.dart' show LazyDatabase;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../core/network/api_client.dart';
 import '../core/network/dio_api_client.dart';
@@ -17,9 +22,14 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   return client;
 });
 
-/// Database lokal Drift (SQLite).
+/// Database lokal Drift (SQLite file persisten, T15).
+/// Riwayat, wishlist, alert, & antrian mutasi bertahan antar sesi.
 final databaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase(NativeDatabase.memory());
+  final db = AppDatabase(LazyDatabase(() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dir.path, 'worthbang.sqlite'));
+    return NativeDatabase.createInBackground(file);
+  }));
   ref.onDispose(db.close);
   return db;
 });

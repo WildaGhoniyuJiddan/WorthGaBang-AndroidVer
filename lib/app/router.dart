@@ -6,6 +6,7 @@ import '../features/auth/presentation/auth_controller.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/tabs/presentation/tab_screens.dart';
+import '../core/widgets/offline_banner.dart';
 import '../l10n/strings.dart';
 
 /// Kunci navigator per tab — masing-masing tab punya back stack sendiri.
@@ -89,7 +90,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 /// Shell bottom navigation: 4 tab sesuai PRD (Beranda, Cari, Riwayat, Profil).
-class BottomNavShell extends StatelessWidget {
+/// Banner offline (T15) tampil di atas konten semua tab.
+class BottomNavShell extends ConsumerWidget {
   const BottomNavShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
@@ -103,9 +105,14 @@ class BottomNavShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      body: navigationShell,
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: _goBranch,

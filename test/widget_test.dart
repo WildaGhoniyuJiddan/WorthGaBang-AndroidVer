@@ -1,7 +1,10 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/app/app.dart';
+import 'package:worthbang/app/providers.dart';
+import 'package:worthbang/core/storage/app_database.dart';
 import 'package:worthbang/features/auth/data/auth_models.dart';
 import 'package:worthbang/features/auth/presentation/auth_controller.dart';
 import 'package:worthbang/l10n/strings.dart';
@@ -30,9 +33,14 @@ void main() {
         matching: find.text(label),
       );
 
+  // DB file persisten (path_provider) tidak ada di widget test —
+  // pakai in-memory agar hermetic.
+  final memDb = AppDatabase(NativeDatabase.memory());
+
   ProviderScope app() => ProviderScope(
         overrides: [
           authControllerProvider.overrideWith(_FakeAuthController.new),
+          databaseProvider.overrideWithValue(memDb),
         ],
         child: const WorthBangApp(),
       );
