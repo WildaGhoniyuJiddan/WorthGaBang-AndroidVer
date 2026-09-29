@@ -54,7 +54,7 @@ void main() {
     // Pindah ke tab Cari.
     await tester.tap(navDestination(1));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.searchPlaceholder), findsOneWidget);
+    expect(find.text(AppStrings.searchScreenTitle), findsOneWidget);
 
     // Pindah ke tab Riwayat.
     await tester.tap(navDestination(2));

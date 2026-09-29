@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/strings.dart';
 import '../../price_check/presentation/price_check_screen.dart';
+import '../../search/presentation/search_screen.dart';
 
 /// Tab Beranda: form cek harga (T3).
 class HomeScreen extends StatelessWidget {
@@ -11,18 +12,12 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) => const PriceCheckScreen();
 }
 
-/// Placeholder tab Cari — diganti Search & filter di T4.
+/// Tab Cari: filter & sort hasil (T5).
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _PlaceholderTab(
-      title: AppStrings.searchTitle,
-      message: AppStrings.searchPlaceholder,
-      icon: Icons.search_outlined,
-    );
-  }
+  Widget build(BuildContext context) => const SearchFilterScreen();
 }
 
 /// Placeholder tab Riwayat — diganti History list di T5.

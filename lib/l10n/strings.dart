@@ -63,4 +63,11 @@ abstract final class AppStrings {
   static const bundleAddItem = 'Tambah komponen';
   static const bundleItemLabel = 'Komponen';
   static const bundlePriceLabel = 'Harga paket yang ditawarkan';
+
+  // Search filter & sort (T5).
+  static const searchScreenTitle = 'Cari Produk';
+  static const searchButton = 'Cari';
+  static const maxPriceLabel = 'Harga maks';
+  static const sortLabel = 'Urutkan';
+  static const searchEmpty = 'Tidak ada listing yang cocok dengan filter.';
 }
