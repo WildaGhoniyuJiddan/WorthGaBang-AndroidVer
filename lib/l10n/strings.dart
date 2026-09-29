@@ -97,4 +97,12 @@ abstract final class AppStrings {
   static const shakeHint = 'Goyangkan HP untuk mengacak ulang';
   static const shakeDetected = 'Shake terdeteksi — merakit ulang…';
   static const totalLabel = 'Total';
+
+  // Toko terdekat (T9).
+  static const storesTitle = 'Toko Terdekat';
+  static const refreshLabel = 'Muat';
+  static const storesEmpty = 'Tidak ada toko di sekitar.';
+  static const cheapestLabel = 'TERMURAH';
+  static const demoLocationNote =
+      'Izin lokasi tidak diberikan — memakai lokasi demo Jakarta.';
 }

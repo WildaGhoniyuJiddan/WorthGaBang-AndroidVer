@@ -7,6 +7,7 @@ import '../../../app/providers.dart';
 import '../../../core/network/api_result.dart';
 import '../../../l10n/strings.dart';
 import '../../builder/presentation/builder_screen.dart';
+import '../../stores/presentation/stores_screen.dart';
 import '../data/history_repository.dart';
 import '../data/models.dart';
 import '../data/price_check_api.dart';
@@ -105,6 +106,14 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
       appBar: AppBar(
         title: const Text(AppStrings.priceCheckTitle),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.store_outlined),
+            tooltip: AppStrings.storesTitle,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (_) => const StoresScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.handyman_outlined),
             tooltip: AppStrings.builderTitle,
