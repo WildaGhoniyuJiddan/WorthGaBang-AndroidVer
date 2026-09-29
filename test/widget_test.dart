@@ -61,10 +61,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.historyScreenTitle), findsOneWidget);
 
-    // Pindah ke tab Profil.
+    // Pindah ke tab Profil: konten profil (bukan placeholder) tampil.
     await tester.tap(navDestination(3));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.profilePlaceholder), findsOneWidget);
+    expect(find.text(AppStrings.settingsSection), findsOneWidget);
+    expect(find.text(AppStrings.feedbackSection), findsOneWidget);
 
     // Kembali ke Beranda.
     await tester.tap(navDestination(0));

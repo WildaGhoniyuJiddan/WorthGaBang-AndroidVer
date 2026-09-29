@@ -21,6 +21,13 @@ abstract class ApiClient {
 
   Future<void> delete(String path);
 
+  /// PUT multipart (upload file). [fields] = form text, [files] = field → path file lokal.
+  Future<Map<String, dynamic>> putMultipart(
+    String path, {
+    Map<String, String>? fields,
+    Map<String, String>? files,
+  });
+
   /// Bebaskan resource (stream controller, dsb).
   void close();
 }

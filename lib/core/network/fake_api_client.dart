@@ -413,5 +413,25 @@ class FakeApiClient implements ApiClient {
   }
 
   @override
+  Future<Map<String, dynamic>> putMultipart(
+    String path, {
+    Map<String, String>? fields,
+    Map<String, String>? files,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    if (path == '/api/v1/users/me') {
+      return {
+        'id': 1,
+        'name': fields?['name'] ?? 'Dan',
+        'email': 'dan@example.com',
+        'photo_url': files?.containsKey('photo') == true
+            ? 'https://example.com/photo.jpg'
+            : null,
+      };
+    }
+    throw const ApiException('Endpoint tidak dikenal di FakeApiClient', 404);
+  }
+
+  @override
   void close() => _logoutController.close();
 }

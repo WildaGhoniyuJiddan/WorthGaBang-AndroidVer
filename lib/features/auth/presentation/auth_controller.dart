@@ -120,6 +120,11 @@ class AuthController extends Notifier<AuthState> {
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
+  /// Refresh data user di state (mis. setelah update profil).
+  void setUser(AppUser user) {
+    state = state.copyWith(user: user);
+  }
+
   /// Logout paksa dari interceptor (refresh token gagal).
   Future<void> forceLogout() async {
     await _repo.logout();

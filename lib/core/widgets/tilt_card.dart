@@ -13,11 +13,15 @@ class TiltCard extends StatefulWidget {
     required this.child,
     this.rotationStream,
     this.maxTilt = 0.25,
+    this.enabled = true,
   });
 
   final Widget child;
   final Stream<GyroscopeEvent>? rotationStream;
   final double maxTilt;
+
+  /// Bila false, kartu diam (pengaturan user).
+  final bool enabled;
 
   @override
   State<TiltCard> createState() => _TiltCardState();
@@ -52,6 +56,9 @@ class _TiltCardState extends State<TiltCard> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.enabled || (_rx == 0 && _ry == 0)) {
+      return widget.child;
+    }
     return Transform(
       alignment: Alignment.center,
       transform: Matrix4.identity()

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/notifications/work_manager.dart';
 import '../features/alerts/data/alert_check_service.dart';
+import '../features/profile/data/profile_api.dart';
 import 'router.dart';
 import 'theme.dart';
 
@@ -48,13 +49,14 @@ class _WorthBangAppState extends ConsumerState<WorthBangApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+    final themeMode =
+        ref.watch(settingsControllerProvider).orDefault.themeMode;
     return MaterialApp.router(
       title: 'WorthBang',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      // Ikuti tema sistem; user bisa override nanti dari Profil (T14).
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: router,
       // Semua string hardcode berbahasa Indonesia, terpusat di lib/l10n.
       locale: const Locale('id', 'ID'),

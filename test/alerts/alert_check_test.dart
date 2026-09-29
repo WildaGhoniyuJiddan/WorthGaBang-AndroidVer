@@ -60,6 +60,14 @@ class _StubClient implements ApiClient {
   }
 
   @override
+  Future<Map<String, dynamic>> putMultipart(
+    String path, {
+    Map<String, String>? fields,
+    Map<String, String>? files,
+  }) async =>
+      {};
+
+  @override
   Future<void> delete(String path) async {}
 
   @override

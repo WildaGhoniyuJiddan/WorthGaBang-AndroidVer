@@ -6,6 +6,7 @@ import '../../../core/sensors/shake_detector.dart';
 import '../../../core/utils/rupiah.dart';
 import '../../../core/widgets/tilt_card.dart';
 import '../../../l10n/strings.dart';
+import '../../profile/data/profile_api.dart';
 import '../data/builder_api.dart';
 import '../data/builder_models.dart';
 
@@ -127,6 +128,10 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: TiltCard(
+                    enabled: ref
+                        .watch(settingsControllerProvider)
+                        .orDefault
+                        .tiltEnabled,
                     child: Card(
                       child: ListTile(
                         leading: CircleAvatar(child: Text(label[0])),

@@ -152,4 +152,23 @@ abstract final class AppStrings {
       'Halo! Aku Bang Worth 🤖. Tanya soal harga komponen, minta rakitan PC, atau tanya fitur aplikasi ini.';
   static const chatError = 'Gagal menghubungi Bang Worth';
   static const buildCardTitle = 'Rakitan rekomendasi';
+
+  // Profil (T14).
+  static const profileScreenTitle = 'Profil';
+  static const settingsSection = 'Pengaturan';
+  static const biometricSetting = 'Biometric unlock';
+  static const biometricSubtitle = 'Buka sesi dengan sidik jari/wajah';
+  static const tiltSetting = 'Efek 3D kartu (gyroscope)';
+  static const tiltSubtitle = 'Kartu miring mengikuti gerakan HP';
+  static const themeSetting = 'Tema';
+  static const feedbackSection = 'Kirim Feedback';
+  static const kesanLabel = 'Kesan';
+  static const saranLabel = 'Saran';
+  static const sendFeedbackButton = 'Kirim Feedback';
+  static const feedbackSent = 'Terima kasih atas feedback-nya!';
+  static const photoUpdated = 'Foto profil diperbarui.';
+  static const editNameTitle = 'Ubah Nama';
+  static const logoutTitle = 'Keluar';
+  static const logoutConfirm = 'Yakin ingin keluar dari akun?';
+  static const logoutButton = 'Keluar';
 }

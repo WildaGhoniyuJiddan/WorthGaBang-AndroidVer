@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/strings.dart';
 import '../../history/presentation/history_screen.dart';
 import '../../price_check/presentation/price_check_screen.dart';
+import '../../profile/presentation/profile_screen.dart';
 import '../../search/presentation/search_screen.dart';
 
 /// Tab Beranda: form cek harga (T3).
@@ -29,52 +29,10 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) => const HistoryListScreen();
 }
 
-/// Placeholder tab Profil — diganti Profile di T6.
+/// Tab Profil (T14).
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _PlaceholderTab(
-      title: AppStrings.profileTitle,
-      message: AppStrings.profilePlaceholder,
-      icon: Icons.person_outline,
-    );
-  }
-}
-
-/// Layout placeholder bersama untuk keempat tab.
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({
-    required this.title,
-    required this.message,
-    required this.icon,
-  });
-
-  final String title;
-  final String message;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon,
-                  size: 64, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 16),
-              Text(title, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              Text(message, textAlign: TextAlign.center),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const ProfileContentScreen();
 }

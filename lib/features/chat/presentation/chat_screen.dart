@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/rupiah.dart';
 import '../../../core/widgets/tilt_card.dart';
 import '../../../l10n/strings.dart';
+import '../../profile/data/profile_api.dart';
 import '../data/chat_api.dart';
 import '../data/chat_models.dart';
 
@@ -101,7 +102,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   if (i >= _bubbles.length) {
                     return const _TypingBubble();
                   }
-                  return _ChatBubble(bubble: _bubbles[i]);
+                  final tiltEnabled = ref
+                      .watch(settingsControllerProvider)
+                      .orDefault
+                      .tiltEnabled;
+                  return _ChatBubble(
+                      bubble: _bubbles[i], tiltEnabled: tiltEnabled);
                 },
               ),
             ),
@@ -146,9 +152,10 @@ class _Bubble {
 }
 
 class _ChatBubble extends StatelessWidget {
-  const _ChatBubble({required this.bubble});
+  const _ChatBubble({required this.bubble, this.tiltEnabled = true});
 
   final _Bubble bubble;
+  final bool tiltEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +181,7 @@ class _ChatBubble extends StatelessWidget {
             Text(bubble.text),
             if (bubble.build != null) ...[
               const SizedBox(height: 8),
-              _BuildCard(data: bubble.build!),
+              _BuildCard(data: bubble.build!, tiltEnabled: tiltEnabled),
             ],
           ],
         ),
@@ -185,13 +192,15 @@ class _ChatBubble extends StatelessWidget {
 
 /// Kartu rakitan dari chatbot — miring mengikuti gyroscope (TiltCard).
 class _BuildCard extends StatelessWidget {
-  const _BuildCard({required this.data});
+  const _BuildCard({required this.data, this.tiltEnabled = true});
 
   final BuildCardData data;
+  final bool tiltEnabled;
 
   @override
   Widget build(BuildContext context) {
     return TiltCard(
+      enabled: tiltEnabled,
       child: Card(
         margin: EdgeInsets.zero,
         child: Padding(

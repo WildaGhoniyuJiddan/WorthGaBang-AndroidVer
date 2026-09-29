@@ -92,9 +92,30 @@ class DioApiClient implements ApiClient {
   }
 
   @override
+  @override
   Future<void> delete(String path) async {
     try {
       await _dio.delete<void>(path);
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> putMultipart(
+    String path, {
+    Map<String, String>? fields,
+    Map<String, String>? files,
+  }) async {
+    try {
+      final form = FormData.fromMap({
+        ...?fields,
+        if (files != null)
+          for (final e in files.entries)
+            e.key: await MultipartFile.fromFile(e.value),
+      });
+      final res = await _dio.put<Map<String, dynamic>>(path, data: form);
+      return res.data ?? {};
     } on DioException catch (e) {
       throw _toApiException(e);
     }
