@@ -105,4 +105,12 @@ abstract final class AppStrings {
   static const cheapestLabel = 'TERMURAH';
   static const demoLocationNote =
       'Izin lokasi tidak diberikan — memakai lokasi demo Jakarta.';
+
+  // Konverter (T10).
+  static const toolsTitle = 'Konverter';
+  static const currencySection = 'Mata Uang';
+  static const timezoneSection = 'Zona Waktu';
+  static const amountLabel = 'Nominal (IDR)';
+  static const toLabel = 'Ke';
+  static const fromLabel = 'Dari';
 }

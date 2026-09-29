@@ -124,7 +124,13 @@ class FakeApiClient implements ApiClient {
         },
       _ when path.startsWith('/api/v1/currency/rates') => {
           'base': 'IDR',
-          'rates': {'USD': 0.000062, 'EUR': 0.000057},
+          'rates': {
+            'USD': 0.000062,
+            'SGD': 0.000083,
+            'MYR': 0.00029,
+            'EUR': 0.000057,
+          },
+          'updated_at': DateTime.now().toIso8601String(),
         },
       _ when path.startsWith('/api/v1/stores/nearby') => {
           'stores': [
