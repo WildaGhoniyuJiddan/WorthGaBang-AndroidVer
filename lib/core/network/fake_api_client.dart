@@ -15,6 +15,50 @@ class FakeApiClient implements ApiClient {
   /// Bila true, refresh berikutnya gagal 401 → memicu logout paksa.
   bool failRefresh = false;
 
+  /// State game Tebak Harga: soal yang sedang berjalan (id → harga asli).
+  int _gameCounter = 0;
+  final Map<String, int> _gameAnswers = {};
+
+  static const _gameBank = [
+    ('RTX 4060 8GB', 'GPU NVIDIA Ada Lovelace, 8GB GDDR6, cocok gaming 1080p',
+        'Kartu grafis mid-range paling laris 2024–2025', 4550000),
+    ('Ryzen 5 5600', 'CPU AMD 6-core 12-thread, AM4, boost 4.4GHz',
+        'Raja budget AM4, sering jadi rekomendasi rakitan hemat', 1825000),
+    ('Samsung 970 EVO Plus 1TB', 'SSD NVMe Gen3, baca 3500 MB/s',
+        'SSD legendaris yang harganya stabil bertahun-tahun', 1250000),
+    ('Logitech G304', 'Mouse wireless LIGHTSPEED, sensor HERO 12K DPI',
+        'Mouse gaming wireless sejuta umat', 485000),
+    ('Keychron K2', 'Keyboard mechanical wireless, hot-swappable',
+        'Keyboard mechanical favorit pekerja kantoran', 1350000),
+  ];
+
+  Map<String, dynamic> _nextGameQuestion() {
+    final (product, specs, hint, _) = _gameBank[_gameCounter % _gameBank.length];
+    _gameCounter++;
+    final id = 'q-fake-$_gameCounter';
+    _gameAnswers[id] = _gameBank[(_gameCounter - 1) % _gameBank.length].$4;
+    return {
+      'question_id': id,
+      'product': product,
+      'specs': specs,
+      'hint': hint,
+    };
+  }
+
+  Map<String, dynamic> _submitGameGuess(Map<String, dynamic>? body) {
+    final qid = body?['question_id'] as String?;
+    final guess = (body?['guess_idr'] as num?)?.toInt() ?? 0;
+    final actual = _gameAnswers[qid] ?? 4500000;
+    final difference = guess - actual;
+    final score =
+        (100 - (difference.abs() / actual * 100)).clamp(0, 100).round();
+    return {
+      'actual_price': actual,
+      'difference': difference,
+      'score': score,
+    };
+  }
+
   static const _fakeTokens = {
     'access_token': 'fake-access-token',
     'refresh_token': 'fake-refresh-token',
@@ -116,12 +160,7 @@ class FakeApiClient implements ApiClient {
             'summary': null,
           };
         }(),
-      _ when path.startsWith('/api/v1/game/question') => {
-          'product_name': 'RTX 4060 8GB',
-          'image_url': null,
-          'price_min': 3000000,
-          'price_max': 6000000,
-        },
+      _ when path.startsWith('/api/v1/game/question') => _nextGameQuestion(),
       _ when path.startsWith('/api/v1/currency/rates') => {
           'base': 'IDR',
           'rates': {
@@ -290,7 +329,7 @@ class FakeApiClient implements ApiClient {
           'answer': 'Berdasarkan data pasar, harga tersebut masih wajar.',
         };
       case '/api/v1/game/submit':
-        return {'correct': true, 'actual_price': 4500000, 'score_delta': 10};
+        return _submitGameGuess(body);
       case '/api/v1/feedback':
         return const {'ok': true};
       case '/api/v1/builder/random':

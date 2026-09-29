@@ -132,4 +132,16 @@ abstract final class AppStrings {
   static const checkAlertsNow = 'Cek alert sekarang';
   static const alertCheckNone =
       'Tidak ada alert yang terpicu saat ini.';
+
+  // Game Tebak Harga (T12).
+  static const gameTitle = 'Tebak Harga';
+  static const guessLabel = 'Tebakan harga';
+  static const submitGuessButton = 'Kirim Tebakan';
+  static const nextRoundButton = 'Ronde Berikutnya';
+  static const finishButton = 'Lihat Hasil';
+  static const retryButton = 'Coba Lagi';
+  static const gameFinished = 'Permainan Selesai!';
+  static const newRecord = '🏆 Rekor baru!';
+  static const playAgainButton = 'Main Lagi';
+  static const moreFeatures = 'Fitur lainnya';
 }

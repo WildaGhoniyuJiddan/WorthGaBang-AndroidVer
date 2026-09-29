@@ -7,6 +7,7 @@ import '../../../app/providers.dart';
 import '../../../core/network/api_result.dart';
 import '../../../l10n/strings.dart';
 import '../../builder/presentation/builder_screen.dart';
+import '../../game/presentation/game_screen.dart';
 import '../../stores/presentation/stores_screen.dart';
 import '../../tools/presentation/tools_screen.dart';
 import '../../wishlist/presentation/wishlist_screen.dart';
@@ -108,38 +109,64 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
       appBar: AppBar(
         title: const Text(AppStrings.priceCheckTitle),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_outline),
-            tooltip: AppStrings.wishlistTitle,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) =>
-                      const WishlistAlertsScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.calculate_outlined),
-            tooltip: AppStrings.toolsTitle,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) => const ToolsScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.store_outlined),
-            tooltip: AppStrings.storesTitle,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) => const StoresScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.handyman_outlined),
-            tooltip: AppStrings.builderTitle,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) => const BuilderScreen()),
-            ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.apps_outlined),
+            tooltip: AppStrings.moreFeatures,
+            onSelected: (v) {
+              final Widget page = switch (v) {
+                'builder' => const BuilderScreen(),
+                'stores' => const StoresScreen(),
+                'tools' => const ToolsScreen(),
+                'wishlist' => const WishlistAlertsScreen(),
+                'game' => const GameScreen(),
+                _ => const SizedBox.shrink(),
+              };
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => page),
+              );
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'builder',
+                child: ListTile(
+                  leading: Icon(Icons.handyman_outlined),
+                  title: Text(AppStrings.builderTitle),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'stores',
+                child: ListTile(
+                  leading: Icon(Icons.store_outlined),
+                  title: Text(AppStrings.storesTitle),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'tools',
+                child: ListTile(
+                  leading: Icon(Icons.calculate_outlined),
+                  title: Text(AppStrings.toolsTitle),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'wishlist',
+                child: ListTile(
+                  leading: Icon(Icons.favorite_outline),
+                  title: Text(AppStrings.wishlistTitle),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'game',
+                child: ListTile(
+                  leading: Icon(Icons.sports_esports_outlined),
+                  title: Text(AppStrings.gameTitle),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),
