@@ -59,6 +59,52 @@ class FakeApiClient implements ApiClient {
     };
   }
 
+  /// Fake chatbot Bang Worth (kontrak B7: {reply, build?}).
+  Map<String, dynamic> _fakeChatReply(Map<String, dynamic>? body) {
+    final msg = (body?['message'] as String? ?? '').toLowerCase();
+    final wantsBuild =
+        msg.contains('rakit') || msg.contains('build') || msg.contains('pc ');
+    if (wantsBuild) {
+      return {
+        'reply':
+            'Siap! Berikut rakitan gaming hemat sekitar Rp 8 jutaan. Semua harga estimasi pasar saat ini — cek lagi dengan fitur Cek Harga ya.',
+        'build': {
+          'items': [
+            {'component': 'CPU', 'name': 'Ryzen 5 5600', 'price': 1825000},
+            {'component': 'GPU', 'name': 'RTX 4060 8GB', 'price': 4550000},
+            {
+              'component': 'RAM',
+              'name': 'TeamGroup T-Force 2x8GB DDR4',
+              'price': 650000
+            },
+            {
+              'component': 'SSD',
+              'name': 'ADATA Legend 710 512GB',
+              'price': 550000
+            },
+            {
+              'component': 'PSU',
+              'name': 'MSI MAG A550BN 550W 80+ Bronze',
+              'price': 750000
+            },
+          ],
+          'total': 8325000,
+          'note': 'Belum termasuk casing & motherboard — sesuaikan dengan budget.',
+        },
+      };
+    }
+    if (msg.contains('murah') || msg.contains('worth')) {
+      return {
+        'reply':
+            'Patokanku: skor ≥ 80 berarti worth it, 60–79 wajar, di bawah itu kemahalan. Coba fitur Cek Harga dan lihat skornya!',
+      };
+    }
+    return {
+      'reply':
+          'Halo! Aku Bang Worth 🤖. Tanya soal harga komponen PC/laptop, minta rakitan ("rakit PC 8 juta"), atau tanya soal fitur aplikasi ini.',
+    };
+  }
+
   static const _fakeTokens = {
     'access_token': 'fake-access-token',
     'refresh_token': 'fake-refresh-token',
@@ -325,9 +371,7 @@ class FakeApiClient implements ApiClient {
           ],
         };
       case '/api/v1/chat/ask':
-        return {
-          'answer': 'Berdasarkan data pasar, harga tersebut masih wajar.',
-        };
+        return _fakeChatReply(body);
       case '/api/v1/game/submit':
         return _submitGameGuess(body);
       case '/api/v1/feedback':

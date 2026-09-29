@@ -7,6 +7,7 @@ import '../../../app/providers.dart';
 import '../../../core/network/api_result.dart';
 import '../../../l10n/strings.dart';
 import '../../builder/presentation/builder_screen.dart';
+import '../../chat/presentation/chat_screen.dart';
 import '../../game/presentation/game_screen.dart';
 import '../../stores/presentation/stores_screen.dart';
 import '../../tools/presentation/tools_screen.dart';
@@ -119,6 +120,7 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                 'tools' => const ToolsScreen(),
                 'wishlist' => const WishlistAlertsScreen(),
                 'game' => const GameScreen(),
+                'chat' => const ChatScreen(),
                 _ => const SizedBox.shrink(),
               };
               Navigator.of(context).push(
@@ -163,6 +165,14 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                 child: ListTile(
                   leading: Icon(Icons.sports_esports_outlined),
                   title: Text(AppStrings.gameTitle),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'chat',
+                child: ListTile(
+                  leading: Icon(Icons.smart_toy_outlined),
+                  title: Text(AppStrings.chatTitle),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
