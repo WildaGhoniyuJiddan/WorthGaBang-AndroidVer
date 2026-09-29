@@ -93,8 +93,29 @@ Legenda: tiap tiket = satu vertical slice utuh (UI → API → lokal → test), 
 | B7 | `/api/v1/chat/ask` → Gemini free tier server-side, grounding dari DB harga | T13 |
 | B8 | `/api/v1/game/question` + `/submit` | T12 |
 | B9 | `/api/v1/currency/rates` (cache 1 jam), `/api/v1/feedback`, `PUT /api/v1/users/me` (multipart) | T10, T14 |
+| B10 | `POST /api/v1/history` (Auth) — push riwayat analisis dari app untuk backup/sync hash-chain | T6, T15 |
 
 Endpoint existing yang dipakai ulang tanpa perubahan: `/analyze`, `/analyze-bundle`, `/suggest/{section}`, `/catalog/*`, `/freshness`.
+
+### B10 — `POST /api/v1/history` (Auth) — push riwayat dari app
+
+- **Method + path:** `POST /api/v1/history`
+- **Auth:** wajib (JWT `get_current_user`; 401 bila tidak ada/invalid). Entri disimpan dengan `user_id` pemilik token; isolasi antar-user dijamin.
+- **Request (JSON):**
+
+  | Field | Tipe | Wajib | Keterangan |
+  |---|---|---|---|
+  | `mode` | string | ya | `pc` \| `laptop` |
+  | `query` | string | ya | 2–255 char |
+  | `input_price` | number | ya | > 0 |
+  | `score` | number | ya | 0–100 |
+  | `verdict` | string | ya | 2–32 char |
+  | `created_at` | datetime | tidak | timestamp analisis versi client |
+
+- **Response:** `201` → item history yang tersimpan (bentuk sama seperti `GET /api/v1/history`): `{id, mode, query, input_price, score, verdict, created_at}`, newest-first.
+- **Clamp timestamp:** `created_at` dari client yang berada di masa depan di-clamp ke waktu server saat ini.
+- **Timezone:** `created_at` tanpa offset timezone (naive) dianggap **UTC**.
+- **Kegunaan:** dipakai T6 (sync opsional riwayat lokal) & T15 (antrean offline → push saat online). Detail kontrak field-per-field di `API_CONTRACT.md`.
 
 ## 5. Urutan Eksekusi (frontier)
 
