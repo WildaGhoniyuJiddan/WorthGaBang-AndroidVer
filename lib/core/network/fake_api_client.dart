@@ -86,14 +86,36 @@ class FakeApiClient implements ApiClient {
           'section': 'pc',
           'suggestions': ['RTX 4060 8GB', 'RTX 4060 Ti 8GB'],
         },
-      _ when path.startsWith('/api/v1/trend') => {
-          'query': query?['query'] ?? 'RTX 4060',
-          'days': 30,
-          'points': [
-            {'date': '2026-08-30', 'median_price': 4700000},
-            {'date': '2026-09-29', 'median_price': 4500000},
-          ],
-        },
+      _ when path.startsWith('/api/v1/trend') => () {
+          final q = query?['query'] as String? ?? 'RTX 4060';
+          final days = int.tryParse(query?['days']?.toString() ?? '30') ?? 30;
+          final now = DateTime.now();
+          final points = List.generate(days, (i) {
+            final d = now.subtract(Duration(days: days - 1 - i));
+            // Pola turun landai + noise deterministik (fake).
+            final price = 4800000 - (i * 8000) - ((i * 37) % 90000);
+            return {
+              'date':
+                  '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+              'price': price,
+            };
+          });
+          final prices = points.map((p) => p['price'] as int).toList();
+          final min = prices.reduce((a, b) => a < b ? a : b);
+          final max = prices.reduce((a, b) => a > b ? a : b);
+          final avg = prices.reduce((a, b) => a + b) / prices.length;
+          final change = (prices.last - prices.first) / prices.first * 100;
+          return {
+            'query': q,
+            'days': days,
+            'points': points,
+            'min': min,
+            'max': max,
+            'avg': avg,
+            'change_percent': double.parse(change.toStringAsFixed(1)),
+            'summary': null,
+          };
+        }(),
       _ when path.startsWith('/api/v1/game/question') => {
           'product_name': 'RTX 4060 8GB',
           'image_url': null,

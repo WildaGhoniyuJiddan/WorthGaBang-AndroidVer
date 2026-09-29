@@ -85,4 +85,8 @@ abstract final class AppStrings {
   static const tamperSelfTest = 'Self-test: simulasi tampering (debug)';
   static const tamperDemoNote =
       'Mode demo: satu blok diubah di memori (database asli tidak disentuh).';
+
+  // Tren harga (T7).
+  static const trendTitle = 'Tren Harga';
+  static const viewTrendButton = 'Lihat tren harga';
 }

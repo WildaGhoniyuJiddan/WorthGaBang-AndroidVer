@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/rupiah.dart';
 import '../../../core/widgets/verdict_badge.dart';
 import '../../../l10n/strings.dart';
+import '../../trends/presentation/trends_screen.dart';
 import '../data/models.dart';
 
 /// Layar hasil analisis: verdict, skor, rentang wajar, pembanding, alternatif.
@@ -53,6 +54,17 @@ class ResultScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(r.recommendation!),
           ],
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    TrendsScreenContent(initialQuery: r.query),
+              ),
+            ),
+            icon: const Icon(Icons.show_chart),
+            label: const Text(AppStrings.viewTrendButton),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
