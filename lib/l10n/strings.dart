@@ -70,4 +70,19 @@ abstract final class AppStrings {
   static const maxPriceLabel = 'Harga maks';
   static const sortLabel = 'Urutkan';
   static const searchEmpty = 'Tidak ada listing yang cocok dengan filter.';
+
+  // History & verify (T6).
+  static const historyScreenTitle = 'Riwayat Analisis';
+  static const historyEmpty =
+      'Belum ada riwayat. Lakukan cek harga dulu di Beranda.';
+  static const verifyChainButton = 'Verifikasi rantai';
+  static const syncButton = 'Sinkron ke server';
+  static const verifyTitle = 'Verifikasi Hash Chain';
+  static const verifyEmpty = 'Belum ada blok untuk diverifikasi.';
+  static String verifyOk(int n) => 'Rantai valid: $n blok terverifikasi.';
+  static const verifyFailed =
+      'Rantai RUSAK: ada blok yang datanya diubah!';
+  static const tamperSelfTest = 'Self-test: simulasi tampering (debug)';
+  static const tamperDemoNote =
+      'Mode demo: satu blok diubah di memori (database asli tidak disentuh).';
 }

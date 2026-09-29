@@ -59,7 +59,7 @@ void main() {
     // Pindah ke tab Riwayat.
     await tester.tap(navDestination(2));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.historyPlaceholder), findsOneWidget);
+    expect(find.text(AppStrings.historyScreenTitle), findsOneWidget);
 
     // Pindah ke tab Profil.
     await tester.tap(navDestination(3));

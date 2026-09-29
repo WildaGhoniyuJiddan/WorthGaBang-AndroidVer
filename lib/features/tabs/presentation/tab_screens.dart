@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/strings.dart';
+import '../../history/presentation/history_screen.dart';
 import '../../price_check/presentation/price_check_screen.dart';
 import '../../search/presentation/search_screen.dart';
 
@@ -20,18 +21,12 @@ class SearchScreen extends StatelessWidget {
   Widget build(BuildContext context) => const SearchFilterScreen();
 }
 
-/// Placeholder tab Riwayat — diganti History list di T5.
+/// Tab Riwayat: daftar + verifikasi hash chain (T6).
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _PlaceholderTab(
-      title: AppStrings.historyTitle,
-      message: AppStrings.historyPlaceholder,
-      icon: Icons.history_outlined,
-    );
-  }
+  Widget build(BuildContext context) => const HistoryListScreen();
 }
 
 /// Placeholder tab Profil — diganti Profile di T6.

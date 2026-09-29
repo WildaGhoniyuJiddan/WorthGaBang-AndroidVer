@@ -17,7 +17,10 @@ final priceCheckApiProvider = Provider<PriceCheckApi>(
 );
 
 final historyRepositoryProvider = Provider<HistoryRepository>(
-  (ref) => HistoryRepository(ref.watch(databaseProvider)),
+  (ref) => HistoryRepository(
+    ref.watch(databaseProvider),
+    ref.watch(apiClientProvider),
+  ),
 );
 
 /// Layar utama Beranda: form cek harga + autocomplete (debounce 300ms).
