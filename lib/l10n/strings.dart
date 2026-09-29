@@ -89,4 +89,12 @@ abstract final class AppStrings {
   // Tren harga (T7).
   static const trendTitle = 'Tren Harga';
   static const viewTrendButton = 'Lihat tren harga';
+
+  // Random builder (T8).
+  static const builderTitle = 'Rakit PC Acak';
+  static const budgetLabel = 'Budget';
+  static const randomBuildButton = 'Acak Rakit';
+  static const shakeHint = 'Goyangkan HP untuk mengacak ulang';
+  static const shakeDetected = 'Shake terdeteksi — merakit ulang…';
+  static const totalLabel = 'Total';
 }

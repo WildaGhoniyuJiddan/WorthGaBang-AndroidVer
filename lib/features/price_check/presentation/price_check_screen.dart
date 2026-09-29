@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../core/network/api_result.dart';
 import '../../../l10n/strings.dart';
+import '../../builder/presentation/builder_screen.dart';
 import '../data/history_repository.dart';
 import '../data/models.dart';
 import '../data/price_check_api.dart';
@@ -101,7 +102,19 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.priceCheckTitle)),
+      appBar: AppBar(
+        title: const Text(AppStrings.priceCheckTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.handyman_outlined),
+            tooltip: AppStrings.builderTitle,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (_) => const BuilderScreen()),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

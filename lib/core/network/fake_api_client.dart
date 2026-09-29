@@ -268,10 +268,30 @@ class FakeApiClient implements ApiClient {
       case '/api/v1/feedback':
         return const {'ok': true};
       case '/api/v1/builder/random':
+        // Kontrak B6: cpu/gpu/ram/ssd/psu + total + budget.
+        final budget = (body?['budget'] as num?)?.toInt() ?? 10000000;
+        Map<String, dynamic> part(String name, double share) => {
+              'name': name,
+              'price': (budget * share).round(),
+            };
+        final cpu = part('Ryzen 5 5600', 0.18);
+        final gpu = part('RTX 4060 8GB', 0.42);
+        final ram = part('TeamGroup T-Force 2x8GB DDR4', 0.07);
+        final ssd = part('ADATA Legend 710 512GB', 0.06);
+        final psu = part('MSI MAG A550BN 550W', 0.08);
+        final total = (cpu['price'] as int) +
+            (gpu['price'] as int) +
+            (ram['price'] as int) +
+            (ssd['price'] as int) +
+            (psu['price'] as int);
         return {
-          'budget': body?['budget'] ?? 10000000,
-          'items': [],
-          'total_price': 9800000,
+          'cpu': cpu,
+          'gpu': gpu,
+          'ram': ram,
+          'ssd': ssd,
+          'psu': psu,
+          'total': total,
+          'budget': budget,
         };
     }
     throw const ApiException('Endpoint tidak dikenal di FakeApiClient', 404);
