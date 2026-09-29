@@ -1,0 +1,12 @@
+# Jangan pernah push folder .agent/ (aturan tetap dari user)
+.agent/
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.idea/
+*.iml
+.DS_Store
