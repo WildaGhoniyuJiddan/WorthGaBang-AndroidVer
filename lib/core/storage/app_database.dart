@@ -13,6 +13,11 @@ class HistoryBlocks extends Table {
   RealColumn get score => real()();
   TextColumn get verdict => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  // --- Hash chain (T3): rantai tamper-evident. Kolom non-null dengan default
+  // '' agar migrasi dari schema v1 aman; blok lama dianggap "legacy".
+  TextColumn get dataJson => text().withDefault(const Constant(''))();
+  TextColumn get prevHash => text().withDefault(const Constant(''))();
+  TextColumn get hash => text().withDefault(const Constant(''))();
 }
 
 /// Item wishlist user.
@@ -52,5 +57,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(historyBlocks, historyBlocks.dataJson);
+            await m.addColumn(historyBlocks, historyBlocks.prevHash);
+            await m.addColumn(historyBlocks, historyBlocks.hash);
+          }
+        },
+      );
 }

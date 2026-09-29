@@ -83,6 +83,40 @@ class $HistoryBlocksTable extends HistoryBlocks
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _dataJsonMeta = const VerificationMeta(
+    'dataJson',
+  );
+  @override
+  late final GeneratedColumn<String> dataJson = GeneratedColumn<String>(
+    'data_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _prevHashMeta = const VerificationMeta(
+    'prevHash',
+  );
+  @override
+  late final GeneratedColumn<String> prevHash = GeneratedColumn<String>(
+    'prev_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _hashMeta = const VerificationMeta('hash');
+  @override
+  late final GeneratedColumn<String> hash = GeneratedColumn<String>(
+    'hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -92,6 +126,9 @@ class $HistoryBlocksTable extends HistoryBlocks
     score,
     verdict,
     createdAt,
+    dataJson,
+    prevHash,
+    hash,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -154,6 +191,24 @@ class $HistoryBlocksTable extends HistoryBlocks
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('data_json')) {
+      context.handle(
+        _dataJsonMeta,
+        dataJson.isAcceptableOrUnknown(data['data_json']!, _dataJsonMeta),
+      );
+    }
+    if (data.containsKey('prev_hash')) {
+      context.handle(
+        _prevHashMeta,
+        prevHash.isAcceptableOrUnknown(data['prev_hash']!, _prevHashMeta),
+      );
+    }
+    if (data.containsKey('hash')) {
+      context.handle(
+        _hashMeta,
+        hash.isAcceptableOrUnknown(data['hash']!, _hashMeta),
+      );
+    }
     return context;
   }
 
@@ -191,6 +246,18 @@ class $HistoryBlocksTable extends HistoryBlocks
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      dataJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}data_json'],
+      )!,
+      prevHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}prev_hash'],
+      )!,
+      hash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hash'],
+      )!,
     );
   }
 
@@ -208,6 +275,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
   final double score;
   final String verdict;
   final DateTime createdAt;
+  final String dataJson;
+  final String prevHash;
+  final String hash;
   const HistoryBlock({
     required this.id,
     required this.mode,
@@ -216,6 +286,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
     required this.score,
     required this.verdict,
     required this.createdAt,
+    required this.dataJson,
+    required this.prevHash,
+    required this.hash,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -227,6 +300,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
     map['score'] = Variable<double>(score);
     map['verdict'] = Variable<String>(verdict);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['data_json'] = Variable<String>(dataJson);
+    map['prev_hash'] = Variable<String>(prevHash);
+    map['hash'] = Variable<String>(hash);
     return map;
   }
 
@@ -239,6 +315,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
       score: Value(score),
       verdict: Value(verdict),
       createdAt: Value(createdAt),
+      dataJson: Value(dataJson),
+      prevHash: Value(prevHash),
+      hash: Value(hash),
     );
   }
 
@@ -255,6 +334,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
       score: serializer.fromJson<double>(json['score']),
       verdict: serializer.fromJson<String>(json['verdict']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      dataJson: serializer.fromJson<String>(json['dataJson']),
+      prevHash: serializer.fromJson<String>(json['prevHash']),
+      hash: serializer.fromJson<String>(json['hash']),
     );
   }
   @override
@@ -268,6 +350,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
       'score': serializer.toJson<double>(score),
       'verdict': serializer.toJson<String>(verdict),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'dataJson': serializer.toJson<String>(dataJson),
+      'prevHash': serializer.toJson<String>(prevHash),
+      'hash': serializer.toJson<String>(hash),
     };
   }
 
@@ -279,6 +364,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
     double? score,
     String? verdict,
     DateTime? createdAt,
+    String? dataJson,
+    String? prevHash,
+    String? hash,
   }) => HistoryBlock(
     id: id ?? this.id,
     mode: mode ?? this.mode,
@@ -287,6 +375,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
     score: score ?? this.score,
     verdict: verdict ?? this.verdict,
     createdAt: createdAt ?? this.createdAt,
+    dataJson: dataJson ?? this.dataJson,
+    prevHash: prevHash ?? this.prevHash,
+    hash: hash ?? this.hash,
   );
   HistoryBlock copyWithCompanion(HistoryBlocksCompanion data) {
     return HistoryBlock(
@@ -299,6 +390,9 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
       score: data.score.present ? data.score.value : this.score,
       verdict: data.verdict.present ? data.verdict.value : this.verdict,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      dataJson: data.dataJson.present ? data.dataJson.value : this.dataJson,
+      prevHash: data.prevHash.present ? data.prevHash.value : this.prevHash,
+      hash: data.hash.present ? data.hash.value : this.hash,
     );
   }
 
@@ -311,14 +405,27 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
           ..write('inputPrice: $inputPrice, ')
           ..write('score: $score, ')
           ..write('verdict: $verdict, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('dataJson: $dataJson, ')
+          ..write('prevHash: $prevHash, ')
+          ..write('hash: $hash')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, mode, query, inputPrice, score, verdict, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    mode,
+    query,
+    inputPrice,
+    score,
+    verdict,
+    createdAt,
+    dataJson,
+    prevHash,
+    hash,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -329,7 +436,10 @@ class HistoryBlock extends DataClass implements Insertable<HistoryBlock> {
           other.inputPrice == this.inputPrice &&
           other.score == this.score &&
           other.verdict == this.verdict &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.dataJson == this.dataJson &&
+          other.prevHash == this.prevHash &&
+          other.hash == this.hash);
 }
 
 class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
@@ -340,6 +450,9 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
   final Value<double> score;
   final Value<String> verdict;
   final Value<DateTime> createdAt;
+  final Value<String> dataJson;
+  final Value<String> prevHash;
+  final Value<String> hash;
   const HistoryBlocksCompanion({
     this.id = const Value.absent(),
     this.mode = const Value.absent(),
@@ -348,6 +461,9 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
     this.score = const Value.absent(),
     this.verdict = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.dataJson = const Value.absent(),
+    this.prevHash = const Value.absent(),
+    this.hash = const Value.absent(),
   });
   HistoryBlocksCompanion.insert({
     this.id = const Value.absent(),
@@ -357,6 +473,9 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
     required double score,
     required String verdict,
     this.createdAt = const Value.absent(),
+    this.dataJson = const Value.absent(),
+    this.prevHash = const Value.absent(),
+    this.hash = const Value.absent(),
   }) : mode = Value(mode),
        query = Value(query),
        inputPrice = Value(inputPrice),
@@ -370,6 +489,9 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
     Expression<double>? score,
     Expression<String>? verdict,
     Expression<DateTime>? createdAt,
+    Expression<String>? dataJson,
+    Expression<String>? prevHash,
+    Expression<String>? hash,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -379,6 +501,9 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
       if (score != null) 'score': score,
       if (verdict != null) 'verdict': verdict,
       if (createdAt != null) 'created_at': createdAt,
+      if (dataJson != null) 'data_json': dataJson,
+      if (prevHash != null) 'prev_hash': prevHash,
+      if (hash != null) 'hash': hash,
     });
   }
 
@@ -390,6 +515,9 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
     Value<double>? score,
     Value<String>? verdict,
     Value<DateTime>? createdAt,
+    Value<String>? dataJson,
+    Value<String>? prevHash,
+    Value<String>? hash,
   }) {
     return HistoryBlocksCompanion(
       id: id ?? this.id,
@@ -399,6 +527,9 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
       score: score ?? this.score,
       verdict: verdict ?? this.verdict,
       createdAt: createdAt ?? this.createdAt,
+      dataJson: dataJson ?? this.dataJson,
+      prevHash: prevHash ?? this.prevHash,
+      hash: hash ?? this.hash,
     );
   }
 
@@ -426,6 +557,15 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (dataJson.present) {
+      map['data_json'] = Variable<String>(dataJson.value);
+    }
+    if (prevHash.present) {
+      map['prev_hash'] = Variable<String>(prevHash.value);
+    }
+    if (hash.present) {
+      map['hash'] = Variable<String>(hash.value);
+    }
     return map;
   }
 
@@ -438,7 +578,10 @@ class HistoryBlocksCompanion extends UpdateCompanion<HistoryBlock> {
           ..write('inputPrice: $inputPrice, ')
           ..write('score: $score, ')
           ..write('verdict: $verdict, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('dataJson: $dataJson, ')
+          ..write('prevHash: $prevHash, ')
+          ..write('hash: $hash')
           ..write(')'))
         .toString();
   }
@@ -1486,6 +1629,9 @@ typedef $$HistoryBlocksTableCreateCompanionBuilder =
       required double score,
       required String verdict,
       Value<DateTime> createdAt,
+      Value<String> dataJson,
+      Value<String> prevHash,
+      Value<String> hash,
     });
 typedef $$HistoryBlocksTableUpdateCompanionBuilder =
     HistoryBlocksCompanion Function({
@@ -1496,6 +1642,9 @@ typedef $$HistoryBlocksTableUpdateCompanionBuilder =
       Value<double> score,
       Value<String> verdict,
       Value<DateTime> createdAt,
+      Value<String> dataJson,
+      Value<String> prevHash,
+      Value<String> hash,
     });
 
 class $$HistoryBlocksTableFilterComposer
@@ -1539,6 +1688,21 @@ class $$HistoryBlocksTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dataJson => $composableBuilder(
+    column: $table.dataJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get prevHash => $composableBuilder(
+    column: $table.prevHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hash => $composableBuilder(
+    column: $table.hash,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1586,6 +1750,21 @@ class $$HistoryBlocksTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get dataJson => $composableBuilder(
+    column: $table.dataJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get prevHash => $composableBuilder(
+    column: $table.prevHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hash => $composableBuilder(
+    column: $table.hash,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$HistoryBlocksTableAnnotationComposer
@@ -1619,6 +1798,15 @@ class $$HistoryBlocksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get dataJson =>
+      $composableBuilder(column: $table.dataJson, builder: (column) => column);
+
+  GeneratedColumn<String> get prevHash =>
+      $composableBuilder(column: $table.prevHash, builder: (column) => column);
+
+  GeneratedColumn<String> get hash =>
+      $composableBuilder(column: $table.hash, builder: (column) => column);
 }
 
 class $$HistoryBlocksTableTableManager
@@ -1659,6 +1847,9 @@ class $$HistoryBlocksTableTableManager
                 Value<double> score = const Value.absent(),
                 Value<String> verdict = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String> dataJson = const Value.absent(),
+                Value<String> prevHash = const Value.absent(),
+                Value<String> hash = const Value.absent(),
               }) => HistoryBlocksCompanion(
                 id: id,
                 mode: mode,
@@ -1667,6 +1858,9 @@ class $$HistoryBlocksTableTableManager
                 score: score,
                 verdict: verdict,
                 createdAt: createdAt,
+                dataJson: dataJson,
+                prevHash: prevHash,
+                hash: hash,
               ),
           createCompanionCallback:
               ({
@@ -1677,6 +1871,9 @@ class $$HistoryBlocksTableTableManager
                 required double score,
                 required String verdict,
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String> dataJson = const Value.absent(),
+                Value<String> prevHash = const Value.absent(),
+                Value<String> hash = const Value.absent(),
               }) => HistoryBlocksCompanion.insert(
                 id: id,
                 mode: mode,
@@ -1685,6 +1882,9 @@ class $$HistoryBlocksTableTableManager
                 score: score,
                 verdict: verdict,
                 createdAt: createdAt,
+                dataJson: dataJson,
+                prevHash: prevHash,
+                hash: hash,
               ),
           withReferenceMapper: (p0) => p0
               .map(

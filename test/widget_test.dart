@@ -48,8 +48,8 @@ void main() {
     expect(navLabel(AppStrings.tabHistory), findsOneWidget);
     expect(navLabel(AppStrings.tabProfile), findsOneWidget);
 
-    // Tab awal: Beranda.
-    expect(find.text(AppStrings.homePlaceholder), findsOneWidget);
+    // Tab awal: Beranda (form cek harga T3).
+    expect(find.text(AppStrings.priceCheckTitle), findsOneWidget);
 
     // Pindah ke tab Cari.
     await tester.tap(navDestination(1));
@@ -69,7 +69,7 @@ void main() {
     // Kembali ke Beranda.
     await tester.tap(navDestination(0));
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.homePlaceholder), findsOneWidget);
+    expect(find.text(AppStrings.priceCheckTitle), findsOneWidget);
   });
 
   testWidgets('NavigationBar punya tepat 4 destination',

@@ -45,4 +45,15 @@ abstract final class AppStrings {
   static const goToRegister = 'Belum punya akun? Daftar di sini';
   static const goToLogin = 'Sudah punya akun? Masuk di sini';
   static const biometricButton = 'Masuk dengan sidik jari';
+
+  // Price check (T3).
+  static const priceCheckTitle = 'Cek Harga';
+  static const queryLabel = 'Nama produk';
+  static const queryHint = 'cth: RTX 4060';
+  static const queryMin = 'Minimal 2 karakter';
+  static const priceLabel = 'Harga yang ditawarkan';
+  static const priceInvalid = 'Masukkan harga yang valid';
+  static const conditionLabel = 'Kondisi';
+  static const checkButton = 'Cek Kelayakan';
+  static const doneButton = 'Selesai';
 }

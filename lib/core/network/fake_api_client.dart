@@ -83,10 +83,8 @@ class FakeApiClient implements ApiClient {
           'sources': ['tokopedia', 'shopee'],
         },
       _ when path.startsWith('/api/v1/suggest/') => {
-          'suggestions': [
-            {'name': 'RTX 4060 8GB', 'section': 'gpu'},
-            {'name': 'RTX 4060 Ti 8GB', 'section': 'gpu'},
-          ],
+          'section': 'pc',
+          'suggestions': ['RTX 4060 8GB', 'RTX 4060 Ti 8GB'],
         },
       _ when path.startsWith('/api/v1/trend') => {
           'query': query?['query'] ?? 'RTX 4060',
@@ -166,16 +164,56 @@ class FakeApiClient implements ApiClient {
           'created_at': '2026-09-29T10:00:00Z',
         };
       case '/api/v1/analyze':
-        final price = (body?['input_price'] as num?)?.toInt() ?? 4500000;
+        final price = (body?['price'] as num?)?.toInt() ?? 4500000;
         return {
           'mode': body?['mode'] ?? 'pc',
           'query': body?['query'] ?? 'RTX 4060',
           'input_price': price,
           'score': 82.5,
           'verdict': 'wajar',
-          'median_market': 4450000,
-          'samples': 37,
-          'alternatives': [],
+          'recommendation':
+              'Harga masih dalam rentang wajar untuk kondisi pasar saat ini.',
+          'reference_price': 4600000,
+          'price_delta_percent': -2.2,
+          'fair_price_low': 4200000,
+          'fair_price_high': 4900000,
+          'tier_label': null,
+          'new_reference_price': 5200000,
+          'used_reference_price': 4100000,
+          'cross_market_advice': 'Bandingkan harga baru vs bekas.',
+          'comparisons': [
+            {
+              'title': 'RTX 4060 8GB Dual Fan',
+              'price': 4550000,
+              'source': 'tokopedia',
+              'listing_url': 'https://example.com/1',
+              'similarity': 0.92,
+              'condition': 'baru',
+            },
+            {
+              'title': 'RTX 4060 8GB Bekas Mulus',
+              'price': 3900000,
+              'source': 'shopee',
+              'listing_url': 'https://example.com/2',
+              'similarity': 0.88,
+              'condition': 'bekas',
+            },
+          ],
+          'alternatives': [
+            {
+              'name': 'RTX 4060 Ti',
+              'score': 12345,
+              'est_price_idr': 6800000,
+              'gain_percent': 18.0,
+            },
+          ],
+          'freshness': {
+            'last_updated_at': '2026-09-29T06:00:00Z',
+            'age_seconds': 3600,
+            'label': '1 jam lalu',
+            'is_stale': false,
+            'primary_source': 'tokopedia',
+          },
         };
       case '/api/v1/analyze-bundle':
         return {

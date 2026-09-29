@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/strings.dart';
+import '../../price_check/presentation/price_check_screen.dart';
 
-/// Placeholder tab Beranda — diganti Price Check form di T2.
+/// Tab Beranda: form cek harga (T3).
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _PlaceholderTab(
-      title: AppStrings.homeTitle,
-      message: AppStrings.homePlaceholder,
-      icon: Icons.home_outlined,
-    );
-  }
+  Widget build(BuildContext context) => const PriceCheckScreen();
 }
 
 /// Placeholder tab Cari — diganti Search & filter di T4.
