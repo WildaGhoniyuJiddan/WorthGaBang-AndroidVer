@@ -19,7 +19,7 @@
 | D8 | Background: **workmanager** + **flutter_local_notifications** | Cek alert 15 menit + notifikasi lokal; tanpa Firebase (FR-23). |
 | D9 | Biometric: **local_auth** | Padanan androidx.biometric (FR-4). |
 | D10 | Chart: **fl_chart** | Line chart tren 30 hari (US-008). |
-| D11 | Backend tetap FastAPI (repo WorthGaBang) | Endpoint analisis existing dipakai ulang; hanya endpoint baru yang dibangun (lihat §4). |
+| D11 | Backend tetap FastAPI (folder `backend/` di repo ini) | Endpoint analisis existing dipakai ulang; hanya endpoint baru yang dibangun (lihat §4). |
 | D12 | Hash chain: `SHA256("$index\|$timestamp\|${json(data)}\|$prevHash")`, genesis `prevHash="GENESIS"` | Sesuai PRD §7; disebut "tamper-evident hash chain (blockchain concept)". |
 | D13 | minSdk 26 | Ikut PRD (open question: konfirmasi ke dosen). |
 
@@ -80,7 +80,7 @@ Legenda: tiap tiket = satu vertical slice utuh (UI → API → lokal → test), 
 | T14 | Profile: foto (kamera/galeri, upload multipart, cache), toggle biometric & tilt, feedback (rating + kesan + saran), logout | US-025, US-026, US-005 | T2 | B9 |
 | T15 | Offline-first polish: banner offline, "last updated", antrean mutasi offline → sync | US-027 | T6, T11 | — |
 
-## 4. Backend Tickets (repo WorthGaBang, FastAPI)
+## 4. Backend Tickets (folder `backend/`, FastAPI)
 
 | # | Endpoint | Dibutuhkan oleh |
 |---|----------|-----------------|
@@ -126,7 +126,7 @@ biometric login → price check → tilt card → shake random build → Tebak H
 ## 8. Open Questions (butuh jawaban user/dosen)
 
 1. D1: setuju Flutter (amandemen PRD) atau tetap Kotlin native?
-2. Backend B1–B9 dikerjakan di repo ini juga atau hanya app saja? (PRD menaruhnya di backend FastAPI.)
+2. Backend B1–B10 dikerjakan di repo ini (folder `backend/`) — dipindah dari repo web pada 2026-09-29.
 3. minSdk 26 final? (PRD open question)
 4. Kota seed data toko untuk demo LBS?
 5. Siapa pemilik Gemini API key + kuota free tier?

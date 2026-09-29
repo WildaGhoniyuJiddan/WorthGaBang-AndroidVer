@@ -1,0 +1,173 @@
+import re
+from datetime import datetime, timezone
+from statistics import mean
+
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
+
+from ..models import LaptopUnit, PCComponent, RawListing
+from .parsing import clean_text, detect_brand, extract_gb
+from .relevance import is_relevant_pc_listing
+
+
+BENCHMARKS = {
+    "rtx 3060": 125,
+    "rtx 4060": 175,
+    "rtx 4070": 245,
+    "rx 6600": 115,
+    "ryzen 5 5600": 100,
+    "ryzen 5 7600": 145,
+    "core i5 12400": 105,
+    "core i5 13400": 135,
+}
+
+
+def _find_model(title: str, component_type: str) -> str:
+    text = clean_text(title)
+    patterns = {
+        "gpu": r"((?:rtx|gtx|rx)\s*\d{3,4}(?:\s*ti|\s*super)?)",
+        "cpu": r"((?:ryzen\s*[3579]|core\s*i[3579])\s*[- ]?\d{4,5}[a-z]*)",
+        "ram": r"(\d+\s*gb\s*(?:ddr[345])?)",
+        "storage": r"(\d+\s*(?:gb|tb)\s*(?:ssd|nvme|hdd))",
+    }
+    match = re.search(patterns.get(component_type, r"(.+)"), text, re.IGNORECASE)
+    return clean_text(match.group(1)) if match else text[:255]
+
+
+def _component_type(title: str) -> str:
+    text = title.lower()
+    if any(word in text for word in ("rtx", "gtx", "radeon", "rx ", "vga", "gpu")):
+        return "gpu"
+    if any(word in text for word in ("ryzen", "core i", "intel", "processor", "cpu")):
+        return "cpu"
+    if "ram" in text or "ddr4" in text or "ddr5" in text:
+        return "ram"
+    if any(word in text for word in ("ssd", "nvme", "hdd", "storage")):
+        return "storage"
+    return "other"
+
+
+def _benchmark(model: str) -> int:
+    lowered = model.lower()
+    for key, value in BENCHMARKS.items():
+        if key in lowered:
+            return value
+    return 0
+
+
+def normalize_laptop(raw: RawListing) -> LaptopUnit:
+    text = f"{raw.raw_title} {raw.raw_spec_text or ''}"
+    cpu_match = re.search(
+        r"((?:intel\s+)?(?:core\s*(?:ultra\s*)?[3579]|ultra\s*[579]|core\s+i[3579]|i[3579])\s*[- ]?\s*\d{3,5}[a-z]*|ryzen\s*(?:ai\s*)?[3579]\s*[- ]?\s*(?:\d{4}[a-z]*|\d{3}\b))",
+        text,
+        re.IGNORECASE,
+    )
+    gpu_match = re.search(r"((?:rtx|gtx|rx)\s*\d{3,4}(?:\s*ti|\s*super)?)", text, re.IGNORECASE)
+    screen_match = re.search(r"(\d{2}(?:\.\d)?)\s*(?:inch|inci|\")", text, re.IGNORECASE)
+
+    # Shorthand slash specs like 8GB/16/512GB or 16/512GB
+    ram_val = None
+    storage_val = None
+    m_slash3 = re.search(r"\b\d{1,2}\s*gb\s*/\s*(\d{1,2})\s*(?:gb)?\s*/\s*(\d{3,4})\s*(?:gb)?\b", text, re.IGNORECASE)
+    if m_slash3:
+        ram_val = int(m_slash3.group(1))
+        storage_val = int(m_slash3.group(2))
+    else:
+        m_slash2 = re.search(r"\b(\d{1,2})\s*(?:gb)?\s*/\s*(\d{3,4})\s*(?:gb)?\b", text, re.IGNORECASE)
+        if m_slash2:
+            ram_val = int(m_slash2.group(1))
+            storage_val = int(m_slash2.group(2))
+
+    if ram_val is None:
+        ram_val = extract_gb(text, r"(\d{1,3})\s*gb\s*(?:ram|ddr|memory)") or extract_gb(text, r"(\d{1,3})\s*gb")
+    if storage_val is None:
+        tb_m = re.search(r"(\d+)\s*tb\b", text, re.IGNORECASE)
+        if tb_m:
+            storage_val = int(tb_m.group(1)) * 1000
+        else:
+            storage_val = extract_gb(text, r"(\d{2,5})\s*gb\s*(?:ssd|nvme|hdd|storage)") or extract_gb(text, r"(?:ssd|nvme|hdd)\s*(\d{2,5})\s*gb")
+
+    return LaptopUnit(
+        raw_listing_id=raw.id,
+        brand=detect_brand(text),
+        model=clean_text(raw.raw_title)[:255],
+        cpu=clean_text(cpu_match.group(1)) if cpu_match else None,
+        gpu=clean_text(gpu_match.group(1)) if gpu_match else None,
+        ram_gb=ram_val,
+        storage_gb=storage_val,
+        screen_size=float(screen_match.group(1)) if screen_match else None,
+        price=raw.raw_price or 0,
+        condition=raw.condition or ("second" if "second" in text.lower() or "bekas" in text.lower() else "new"),
+        source=raw.source,
+        listing_url=raw.listing_url,
+        scraped_at=raw.scraped_at,
+    )
+
+
+def _canonical_model(model: str) -> str:
+    # "RTX3050" / "rtx 3050" / "RX6600XT" -> "RTX 3050" / "RX 6600 Xt"
+    text = re.sub(r"\s+", " ", model.strip().upper())
+    text = re.sub(r"(RTX|GTX|RX|RYZEN|CORE I\d)\s*", r"\1 ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def normalize_listing(session: Session, raw: RawListing) -> None:
+    if not raw.raw_price:
+        return
+    if raw.category == "laptop":
+        existing = session.scalar(select(LaptopUnit).where(LaptopUnit.raw_listing_id == raw.id))
+        if not existing:
+            session.add(normalize_laptop(raw))
+        return
+
+    component_type = _component_type(raw.raw_title)
+    if not is_relevant_pc_listing(raw.raw_title, raw.raw_title, component_type):
+        return
+    model = _canonical_model(_find_model(raw.raw_title, component_type))
+    brand = detect_brand(raw.raw_title)
+    existing = session.scalar(
+        select(PCComponent).where(
+            PCComponent.component_type == component_type,
+            PCComponent.brand == brand,
+            PCComponent.model == model,
+        )
+    )
+    if not existing:
+        existing = PCComponent(component_type=component_type, brand=brand, model=model)
+        session.add(existing)
+    session.flush()
+    all_rows = session.scalars(
+        select(RawListing).where(RawListing.category == "pc", RawListing.raw_price.is_not(None))
+    ).all()
+    model_tokens = [token for token in re.findall(r"[a-z0-9]+", model.lower()) if len(token) > 1]
+    variant = next((v for v in ("super", "ti") if v in model_tokens), None)
+
+    def _matches(row_title: str) -> bool:
+        tokens = set(re.findall(r"[a-z0-9]+", row_title.lower()))
+        if not all(token in tokens for token in model_tokens):
+            return False
+        # "RTX 4060" tidak boleh match "RTX 4060 Ti" / "4060 SUPER" dan sebaliknya
+        if variant:
+            return variant in tokens
+        return not any(v in tokens for v in ("ti", "super"))
+
+    matching_prices = [
+        row.raw_price
+        for row in all_rows
+        if row.raw_price and _matches(row.raw_title) and is_relevant_pc_listing(model, row.raw_title, component_type)
+    ]
+    prices = matching_prices or [row.raw_price for row in all_rows if row.raw_price]
+    existing.avg_price = int(mean(prices)) if prices else raw.raw_price
+    existing.sample_count = len(prices)
+    existing.benchmark_score = _benchmark(model)
+    existing.updated_at = datetime.now(timezone.utc)
+
+
+def normalize_pending(session: Session) -> int:
+    pending = session.scalars(select(RawListing).order_by(RawListing.id)).all()
+    count = 0
+    for raw in pending:
+        normalize_listing(session, raw)
+        count += 1
+    session.commit()
+    return count
