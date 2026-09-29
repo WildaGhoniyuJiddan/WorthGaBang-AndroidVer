@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import 'bundle_models.dart';
 import 'models.dart';
 
 /// Akses endpoint price check (existing backend, tanpa perubahan).
@@ -26,6 +27,23 @@ class PriceCheckApi {
       },
     );
     return AnalysisResult.fromJson(json);
+  }
+
+  /// POST /api/v1/analyze-bundle — analisis paket 1–6 komponen.
+  Future<BundleResult> analyzeBundle({
+    required List<BundleInputItem> items,
+    required int bundlePrice,
+    String condition = 'any',
+  }) async {
+    final json = await _client.postJson(
+      '/api/v1/analyze-bundle',
+      body: {
+        'items': items.map((e) => e.toJson()).toList(),
+        'bundle_price': bundlePrice,
+        'condition': condition,
+      },
+    );
+    return BundleResult.fromJson(json);
   }
 
   /// GET /api/v1/suggest/{section} — autocomplete (frontend debounce 300ms).

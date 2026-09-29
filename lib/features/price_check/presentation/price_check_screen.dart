@@ -10,6 +10,7 @@ import '../data/history_repository.dart';
 import '../data/models.dart';
 import '../data/price_check_api.dart';
 import 'result_screen.dart';
+import 'bundle_screen.dart';
 
 final priceCheckApiProvider = Provider<PriceCheckApi>(
   (ref) => PriceCheckApi(ref.watch(apiClientProvider)),
@@ -201,6 +202,15 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                     style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ],
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => const BundleScreen()),
+                  ),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text(AppStrings.bundleModeButton),
+                ),
               ],
             ),
           ),

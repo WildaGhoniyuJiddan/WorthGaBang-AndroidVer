@@ -216,12 +216,26 @@ class FakeApiClient implements ApiClient {
           },
         };
       case '/api/v1/analyze-bundle':
+        final items = (body?['items'] as List? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .toList();
         return {
+          'bundle_price': body?['bundle_price'] ?? 15000000,
+          'reference_total': 14800000,
           'score': 78.0,
           'verdict': 'wajar',
-          'total_input': 15000000,
-          'total_median': 14800000,
-          'items': [],
+          'recommendation': 'Harga paket masih wajar.',
+          'savings_percent': 2.5,
+          'items': [
+            for (final it in items)
+              {
+                'query': it['query'] ?? '',
+                'price': it['price'] ?? 0,
+                'reference_price': 4600000,
+                'score': 80.0,
+                'verdict': 'wajar',
+              },
+          ],
         };
       case '/api/v1/chat/ask':
         return {

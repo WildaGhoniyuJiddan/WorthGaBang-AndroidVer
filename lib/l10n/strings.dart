@@ -56,4 +56,11 @@ abstract final class AppStrings {
   static const conditionLabel = 'Kondisi';
   static const checkButton = 'Cek Kelayakan';
   static const doneButton = 'Selesai';
+
+  // Bundle (T4).
+  static const bundleTitle = 'Cek Bundle';
+  static const bundleModeButton = 'Mode Bundle (multi-komponen)';
+  static const bundleAddItem = 'Tambah komponen';
+  static const bundleItemLabel = 'Komponen';
+  static const bundlePriceLabel = 'Harga paket yang ditawarkan';
 }
