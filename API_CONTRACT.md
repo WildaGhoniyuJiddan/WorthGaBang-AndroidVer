@@ -114,6 +114,13 @@
   "score": 82.5, "verdict": "wajar", "created_at": "2026-09-29T10:00:00Z" }  // created_at opsional
 // response 201 → item history yang tersimpan (bentuk sama seperti GET)
 // Dipakai T6 (sync opsional) & T15 (antrean offline): app push entri hash-chain lokal.
+// Catatan validasi: `query`/`verdict` di-strip saat validasi (min_length berlaku
+// untuk nilai yang sudah di-strip); `created_at` naive dianggap UTC, aware
+// dikonversi ke UTC, timestamp masa depan di-clamp ke waktu server.
+// > Follow-up idempotency (belum diimplementasikan): endpoint ini dipakai untuk
+// > retry offline-sync, sehingga retry dapat menduplikasi entri identik.
+// > Rekomendasi: client kirim idempotency key (mis. UUID per entri lokal) ATAU
+// > tambah unique constraint (user_id, created_at, input_query) di DB.
 ```
 
 #### GET /api/v1/wishlist (Auth) → `{items: [{id, query, mode, target_price?, created_at}]}`
