@@ -41,6 +41,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
     client: ref.watch(apiClientProvider),
     storage: ref.watch(tokenStorageProvider),
+    localDatabase: ref.watch(databaseProvider),
+    localOnly: true,
   );
 });
 

@@ -60,14 +60,30 @@ class PendingMutations extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+/// Akun lokal sementara sampai autentikasi backend tersedia.
+class LocalAccounts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get email => text().unique()();
+  TextColumn get passwordSalt => text()();
+  TextColumn get passwordHash => text()();
+}
+
 @DriftDatabase(
-  tables: [HistoryBlocks, WishlistItems, PriceAlerts, CachedResults, PendingMutations],
+  tables: [
+    HistoryBlocks,
+    WishlistItems,
+    PriceAlerts,
+    CachedResults,
+    PendingMutations,
+    LocalAccounts,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,6 +95,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await m.createTable(pendingMutations);
+          }
+          if (from < 4) {
+            await m.createTable(localAccounts);
           }
         },
       );

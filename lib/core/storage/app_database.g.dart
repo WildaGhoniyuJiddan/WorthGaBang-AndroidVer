@@ -1897,6 +1897,365 @@ class PendingMutationsCompanion extends UpdateCompanion<PendingMutation> {
   }
 }
 
+class $LocalAccountsTable extends LocalAccounts
+    with TableInfo<$LocalAccountsTable, LocalAccount> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalAccountsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _passwordSaltMeta = const VerificationMeta(
+    'passwordSalt',
+  );
+  @override
+  late final GeneratedColumn<String> passwordSalt = GeneratedColumn<String>(
+    'password_salt',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _passwordHashMeta = const VerificationMeta(
+    'passwordHash',
+  );
+  @override
+  late final GeneratedColumn<String> passwordHash = GeneratedColumn<String>(
+    'password_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    email,
+    passwordSalt,
+    passwordHash,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_accounts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalAccount> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_emailMeta);
+    }
+    if (data.containsKey('password_salt')) {
+      context.handle(
+        _passwordSaltMeta,
+        passwordSalt.isAcceptableOrUnknown(
+          data['password_salt']!,
+          _passwordSaltMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_passwordSaltMeta);
+    }
+    if (data.containsKey('password_hash')) {
+      context.handle(
+        _passwordHashMeta,
+        passwordHash.isAcceptableOrUnknown(
+          data['password_hash']!,
+          _passwordHashMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_passwordHashMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalAccount map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalAccount(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      )!,
+      passwordSalt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}password_salt'],
+      )!,
+      passwordHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}password_hash'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalAccountsTable createAlias(String alias) {
+    return $LocalAccountsTable(attachedDatabase, alias);
+  }
+}
+
+class LocalAccount extends DataClass implements Insertable<LocalAccount> {
+  final int id;
+  final String name;
+  final String email;
+  final String passwordSalt;
+  final String passwordHash;
+  const LocalAccount({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.passwordSalt,
+    required this.passwordHash,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['email'] = Variable<String>(email);
+    map['password_salt'] = Variable<String>(passwordSalt);
+    map['password_hash'] = Variable<String>(passwordHash);
+    return map;
+  }
+
+  LocalAccountsCompanion toCompanion(bool nullToAbsent) {
+    return LocalAccountsCompanion(
+      id: Value(id),
+      name: Value(name),
+      email: Value(email),
+      passwordSalt: Value(passwordSalt),
+      passwordHash: Value(passwordHash),
+    );
+  }
+
+  factory LocalAccount.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalAccount(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      email: serializer.fromJson<String>(json['email']),
+      passwordSalt: serializer.fromJson<String>(json['passwordSalt']),
+      passwordHash: serializer.fromJson<String>(json['passwordHash']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'email': serializer.toJson<String>(email),
+      'passwordSalt': serializer.toJson<String>(passwordSalt),
+      'passwordHash': serializer.toJson<String>(passwordHash),
+    };
+  }
+
+  LocalAccount copyWith({
+    int? id,
+    String? name,
+    String? email,
+    String? passwordSalt,
+    String? passwordHash,
+  }) => LocalAccount(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    email: email ?? this.email,
+    passwordSalt: passwordSalt ?? this.passwordSalt,
+    passwordHash: passwordHash ?? this.passwordHash,
+  );
+  LocalAccount copyWithCompanion(LocalAccountsCompanion data) {
+    return LocalAccount(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      email: data.email.present ? data.email.value : this.email,
+      passwordSalt: data.passwordSalt.present
+          ? data.passwordSalt.value
+          : this.passwordSalt,
+      passwordHash: data.passwordHash.present
+          ? data.passwordHash.value
+          : this.passwordHash,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalAccount(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('email: $email, ')
+          ..write('passwordSalt: $passwordSalt, ')
+          ..write('passwordHash: $passwordHash')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, email, passwordSalt, passwordHash);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalAccount &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.email == this.email &&
+          other.passwordSalt == this.passwordSalt &&
+          other.passwordHash == this.passwordHash);
+}
+
+class LocalAccountsCompanion extends UpdateCompanion<LocalAccount> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> email;
+  final Value<String> passwordSalt;
+  final Value<String> passwordHash;
+  const LocalAccountsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.email = const Value.absent(),
+    this.passwordSalt = const Value.absent(),
+    this.passwordHash = const Value.absent(),
+  });
+  LocalAccountsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String email,
+    required String passwordSalt,
+    required String passwordHash,
+  }) : name = Value(name),
+       email = Value(email),
+       passwordSalt = Value(passwordSalt),
+       passwordHash = Value(passwordHash);
+  static Insertable<LocalAccount> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? email,
+    Expression<String>? passwordSalt,
+    Expression<String>? passwordHash,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (passwordSalt != null) 'password_salt': passwordSalt,
+      if (passwordHash != null) 'password_hash': passwordHash,
+    });
+  }
+
+  LocalAccountsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? email,
+    Value<String>? passwordSalt,
+    Value<String>? passwordHash,
+  }) {
+    return LocalAccountsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      passwordSalt: passwordSalt ?? this.passwordSalt,
+      passwordHash: passwordHash ?? this.passwordHash,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (passwordSalt.present) {
+      map['password_salt'] = Variable<String>(passwordSalt.value);
+    }
+    if (passwordHash.present) {
+      map['password_hash'] = Variable<String>(passwordHash.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalAccountsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('email: $email, ')
+          ..write('passwordSalt: $passwordSalt, ')
+          ..write('passwordHash: $passwordHash')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1907,6 +2266,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PendingMutationsTable pendingMutations = $PendingMutationsTable(
     this,
   );
+  late final $LocalAccountsTable localAccounts = $LocalAccountsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1917,6 +2277,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     priceAlerts,
     cachedResults,
     pendingMutations,
+    localAccounts,
   ];
 }
 
@@ -3010,6 +3371,213 @@ typedef $$PendingMutationsTableProcessedTableManager =
       PendingMutation,
       PrefetchHooks Function()
     >;
+typedef $$LocalAccountsTableCreateCompanionBuilder =
+    LocalAccountsCompanion Function({
+      Value<int> id,
+      required String name,
+      required String email,
+      required String passwordSalt,
+      required String passwordHash,
+    });
+typedef $$LocalAccountsTableUpdateCompanionBuilder =
+    LocalAccountsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> email,
+      Value<String> passwordSalt,
+      Value<String> passwordHash,
+    });
+
+class $$LocalAccountsTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalAccountsTable> {
+  $$LocalAccountsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get passwordSalt => $composableBuilder(
+    column: $table.passwordSalt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get passwordHash => $composableBuilder(
+    column: $table.passwordHash,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalAccountsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalAccountsTable> {
+  $$LocalAccountsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get passwordSalt => $composableBuilder(
+    column: $table.passwordSalt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get passwordHash => $composableBuilder(
+    column: $table.passwordHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalAccountsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalAccountsTable> {
+  $$LocalAccountsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get passwordSalt => $composableBuilder(
+    column: $table.passwordSalt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get passwordHash => $composableBuilder(
+    column: $table.passwordHash,
+    builder: (column) => column,
+  );
+}
+
+class $$LocalAccountsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalAccountsTable,
+          LocalAccount,
+          $$LocalAccountsTableFilterComposer,
+          $$LocalAccountsTableOrderingComposer,
+          $$LocalAccountsTableAnnotationComposer,
+          $$LocalAccountsTableCreateCompanionBuilder,
+          $$LocalAccountsTableUpdateCompanionBuilder,
+          (
+            LocalAccount,
+            BaseReferences<_$AppDatabase, $LocalAccountsTable, LocalAccount>,
+          ),
+          LocalAccount,
+          PrefetchHooks Function()
+        > {
+  $$LocalAccountsTableTableManager(_$AppDatabase db, $LocalAccountsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalAccountsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalAccountsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalAccountsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> passwordSalt = const Value.absent(),
+                Value<String> passwordHash = const Value.absent(),
+              }) => LocalAccountsCompanion(
+                id: id,
+                name: name,
+                email: email,
+                passwordSalt: passwordSalt,
+                passwordHash: passwordHash,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String email,
+                required String passwordSalt,
+                required String passwordHash,
+              }) => LocalAccountsCompanion.insert(
+                id: id,
+                name: name,
+                email: email,
+                passwordSalt: passwordSalt,
+                passwordHash: passwordHash,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LocalAccountsTable, LocalAccount>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $LocalAccountsTable,
+                    LocalAccount
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalAccountsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalAccountsTable,
+      LocalAccount,
+      $$LocalAccountsTableFilterComposer,
+      $$LocalAccountsTableOrderingComposer,
+      $$LocalAccountsTableAnnotationComposer,
+      $$LocalAccountsTableCreateCompanionBuilder,
+      $$LocalAccountsTableUpdateCompanionBuilder,
+      (
+        LocalAccount,
+        BaseReferences<_$AppDatabase, $LocalAccountsTable, LocalAccount>,
+      ),
+      LocalAccount,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3024,4 +3592,6 @@ class $AppDatabaseManager {
       $$CachedResultsTableTableManager(_db, _db.cachedResults);
   $$PendingMutationsTableTableManager get pendingMutations =>
       $$PendingMutationsTableTableManager(_db, _db.pendingMutations);
+  $$LocalAccountsTableTableManager get localAccounts =>
+      $$LocalAccountsTableTableManager(_db, _db.localAccounts);
 }

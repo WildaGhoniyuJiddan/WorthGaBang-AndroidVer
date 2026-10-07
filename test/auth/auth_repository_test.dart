@@ -1,7 +1,9 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/core/network/api_exception.dart';
 import 'package:worthbang/core/network/fake_api_client.dart';
 import 'package:worthbang/core/secure/token_storage.dart';
+import 'package:worthbang/core/storage/app_database.dart';
 import 'package:worthbang/features/auth/data/auth_repository.dart';
 
 void main() {
@@ -78,5 +80,89 @@ void main() {
       expect(await storage.readAccessToken(), isNull);
       expect(await repo.currentUser(), isNull);
     });
+  });
+
+  group('AuthRepository local SQLite auth', () {
+    late AppDatabase db;
+    late TokenStorage localStorage;
+    late AuthRepository localRepo;
+
+    setUp(() {
+      db = AppDatabase(NativeDatabase.memory());
+      localStorage = TokenStorage(MemorySecureKv());
+      localRepo = AuthRepository(
+        client: FakeApiClient(),
+        storage: localStorage,
+        localDatabase: db,
+        localOnly: true,
+      );
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('register stores account locally and logs in', () async {
+      final session = await localRepo.register(
+        name: 'Budi',
+        email: 'BUDI@example.com',
+        password: 'password123',
+      );
+
+      expect(session.user.email, 'budi@example.com');
+      expect(await localStorage.readAccessToken(), 'local-access-1');
+      final account = await db.select(db.localAccounts).getSingle();
+      expect(account.passwordHash, isNot('password123'));
+      expect(account.passwordSalt, isNotEmpty);
+    });
+
+    test(
+      'local login checks password and restores session without API',
+      () async {
+        await localRepo.register(
+          name: 'Budi',
+          email: 'budi@example.com',
+          password: 'password123',
+        );
+        await localRepo.logout();
+
+        final session = await localRepo.login(
+          email: 'BUDI@example.com',
+          password: 'password123',
+        );
+        expect(session.user.name, 'Budi');
+
+        await localRepo.logout();
+        await localRepo.login(
+          email: 'budi@example.com',
+          password: 'password123',
+        );
+        expect((await localRepo.restoreSession())?.email, 'budi@example.com');
+      },
+    );
+
+    test(
+      'local login rejects wrong password and duplicate registration',
+      () async {
+        await localRepo.register(
+          name: 'Budi',
+          email: 'budi@example.com',
+          password: 'password123',
+        );
+
+        await expectLater(
+          localRepo.login(email: 'budi@example.com', password: 'wrongpass'),
+          throwsA(isA<ApiException>()),
+        );
+        await expectLater(
+          localRepo.register(
+            name: 'Budi Lain',
+            email: 'BUDI@example.com',
+            password: 'password456',
+          ),
+          throwsA(isA<ApiException>()),
+        );
+      },
+    );
   });
 }
