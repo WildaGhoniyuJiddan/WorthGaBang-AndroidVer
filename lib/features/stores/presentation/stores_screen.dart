@@ -143,7 +143,10 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                   TileLayer(
                     urlTemplate:
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.worthbang',
+                    // WAJIB: identifikasi aplikasi ke tile server OSM
+                    // (tanpa ini request bisa diblokir).
+                    userAgentPackageName: 'com.worthbang.worthbang',
+                    maxNativeZoom: 19,
                   ),
                   MarkerLayer(
                     markers: [
@@ -162,6 +165,14 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                           child: const Icon(Icons.location_on,
                               color: Colors.red, size: 32),
                         ),
+                    ],
+                  ),
+                  // Wajib lisensi OSM: tampilkan atribusi kontributor.
+                  RichAttributionWidget(
+                    attributions: [
+                      TextSourceAttribution(
+                        'OpenStreetMap contributors',
+                      ),
                     ],
                   ),
                 ],
