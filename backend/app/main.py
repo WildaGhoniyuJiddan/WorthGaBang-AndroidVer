@@ -274,45 +274,6 @@ def ingest_source(
     return {"source": source, "received": len(payload.items), "inserted": inserted}
 
 
-@app.post("/api/v1/jobs/scrape")
-def trigger_scrape(
-    query: str | None = Query(default=None, min_length=2),
-    _: str = Depends(require_job_token),
-) -> dict:
-    from .jobs import run_cycle
-
-    result = run_cycle(query)
-    return {
-        "query": result["query"],
-        "fallback_source": result["fallback_source"],
-        "runs": [
-            {
-                "source": run.source,
-                "status": run.status,
-                "item_count": run.item_count,
-                "error_message": run.error_message,
-                "is_fallback": run.is_fallback,
-            }
-            for run in result["runs"]
-        ],
-    }
-
-
-@app.post("/api/v1/jobs/pipeline/{name}")
-def trigger_pipeline(
-    name: str,
-    _: str = Depends(require_job_token),
-) -> dict:
-    """Trigger pipeline pengumpulan harga BARU: 'pc' atau 'laptop' (blocking)."""
-    from .jobs import run_pipeline_laptop, run_pipeline_pc
-
-    if name == "pc":
-        return run_pipeline_pc(progress=lambda m: None)
-    if name == "laptop":
-        return run_pipeline_laptop(progress=lambda m: None)
-    raise HTTPException(status_code=404, detail=f"Pipeline tidak dikenal: {name}")
-
-
 # Debug endpoint for database connection
 @app.get("/api/v1/debug/db")
 def debug_db(db: Session = Depends(get_db)) -> dict:
