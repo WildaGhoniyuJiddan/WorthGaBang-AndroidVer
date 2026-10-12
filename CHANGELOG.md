@@ -4,7 +4,7 @@ Semua perubahan penting pada proyek ini dicatat di file ini.
 
 ## 2026-10-12 — Fase 3: backend ramping + fitur lokal Dart (Opsi 1)
 
-Backend (`android/backend/`) dipangkas ke endpoint yang tidak bisa dihitung lokal:
+Backend (`backend/`) dipangkas ke endpoint yang tidak bisa dihitung lokal:
 auth ×4, history ×2, `POST /api/v1/chat/ask`, `POST /api/v1/analyze`,
 `POST /api/v1/analyze-bundle`, `GET /api/v1/suggest/{section}`, `/health`,
 `/api/v1/debug/*`. Yang dicabut: wishlist, alerts, stores/nearby, trend,
@@ -33,7 +33,7 @@ chat di app diubah menjadi "Tanya soal komponen PC/laptop…".
 
 ## 2026-09-29 — Backend tickets B1–B10 selesai
 
-Endpoint `/api/v1/*` dibangun di repo `WorthGaBang` (folder `android/backend/app/routers/mobile.py`);
+Endpoint `/api/v1/*` dibangun di repo `WorthGaBang` (folder `backend/app/routers/mobile.py`);
 spesifikasi lengkap ada di `API_CONTRACT.md`. App ticket T0 & T1 juga mulai dikerjakan.
 
 | Ticket | Judul | Status |
