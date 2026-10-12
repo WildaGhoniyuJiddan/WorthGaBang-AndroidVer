@@ -5,8 +5,6 @@ import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/widgets/verdict_badge.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/alerts_api.dart';
-import 'package:worthbang/services/sync_queue.dart';
-import 'package:worthbang/services/sync_service.dart';
 import 'package:worthbang/screens/trends_screen.dart';
 import 'package:worthbang/services/wishlist_api.dart';
 import 'package:worthbang/models/price_check_models.dart';
@@ -33,30 +31,17 @@ class ResultScreen extends ConsumerWidget {
             tooltip: AppStrings.addWishlist,
             onPressed: () async {
               try {
-                final outcome =
-                    await ref.read(syncServiceProvider).runOrQueue(
-                          kind: 'wishlist',
-                          payload: {
-                            'query': r.query,
-                            'mode': r.mode,
-                            'target_price': r.inputPrice,
-                          },
-                          action: () =>
-                              ref.read(wishlistApiProvider).addWishlist(
-                                    query: r.query,
-                                    mode: r.mode,
-                                    targetPrice: r.inputPrice,
-                                  ),
-                        );
+                await ref.read(wishlistApiProvider).addWishlist(
+                      query: r.query,
+                      mode: r.mode,
+                      targetPrice: r.inputPrice,
+                    );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(outcome == SyncOutcome.sent
-                            ? AppStrings.wishlistAdded
-                            : AppStrings.queuedForSync)),
+                    const SnackBar(
+                        content: Text(AppStrings.wishlistAdded)),
                   );
                 }
-                ref.invalidate(pendingCountProvider);
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -192,7 +177,7 @@ class ResultScreen extends ConsumerWidget {
   }
 }
 
-/// Dialog buat price alert: input target harga → POST /api/v1/alerts.
+/// Dialog buat price alert: input target harga → simpan lokal.
 Future<void> _showAlertDialog(
     BuildContext context, WidgetRef ref, AnalysisResult r) async {
   final target = TextEditingController(
@@ -227,28 +212,16 @@ Future<void> _showAlertDialog(
       int.tryParse(target.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
   if (price <= 0) return;
   try {
-    final outcome = await ref.read(syncServiceProvider).runOrQueue(
-          kind: 'alert',
-          payload: {
-            'query': r.query,
-            'mode': r.mode,
-            'target_price': price,
-          },
-          action: () => ref.read(alertsApiProvider).addAlert(
-                query: r.query,
-                mode: r.mode,
-                targetPrice: price,
-              ),
+    await ref.read(alertsApiProvider).addAlert(
+          query: r.query,
+          mode: r.mode,
+          targetPrice: price,
         );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(outcome == SyncOutcome.sent
-                ? AppStrings.alertAdded
-                : AppStrings.queuedForSync)),
+        const SnackBar(content: Text(AppStrings.alertAdded)),
       );
     }
-    ref.invalidate(pendingCountProvider);
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context)

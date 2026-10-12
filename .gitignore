@@ -1,6 +1,11 @@
 # Jangan pernah push folder .agent/ (aturan tetap dari user)
 .agent/
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
 # Flutter/Dart
 .dart_tool/
 .flutter-plugins

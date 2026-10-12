@@ -1,13 +1,14 @@
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/providers/providers.dart';
-import 'package:worthbang/services/api_client.dart';
+import 'package:worthbang/services/app_database.dart' as db;
 
 final alertsApiProvider = Provider<AlertsApi>(
-  (ref) => AlertsApi(ref.watch(apiClientProvider)),
+  (ref) => AlertsApi(ref.watch(databaseProvider)),
 );
 
-/// Price alert (kontrak: B3 GET/POST/DELETE /api/v1/alerts).
+/// Price alert (sekarang 100% lokal — tabel Drift PriceAlerts).
 class PriceAlert {
   const PriceAlert({
     required this.id,
@@ -25,8 +26,15 @@ class PriceAlert {
   final int? currentPrice;
   final bool isActive;
 
-  factory PriceAlert.fromJson(Map<String, dynamic> json) =>
-      PriceAlert(
+  factory PriceAlert.fromDb(db.PriceAlert row) => PriceAlert(
+        id: row.id,
+        query: row.query,
+        targetPrice: row.targetPrice,
+        mode: row.mode,
+        isActive: row.isActive,
+      );
+
+  factory PriceAlert.fromJson(Map<String, dynamic> json) => PriceAlert(
         id: (json['id'] as num).toInt(),
         query: json['query'] as String? ?? '',
         targetPrice: (json['target_price'] as num).toInt(),
@@ -37,15 +45,15 @@ class PriceAlert {
 }
 
 class AlertsApi {
-  AlertsApi(this._client);
+  AlertsApi(this._db);
 
-  final ApiClient _client;
+  final db.AppDatabase _db;
 
   Future<List<PriceAlert>> getAlerts() async {
-    final json = await _client.getJson('/api/v1/alerts');
-    return ((json['items'] as List?) ?? [])
-        .map((e) => PriceAlert.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final rows = await (_db.select(_db.priceAlerts)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+    return rows.map(PriceAlert.fromDb).toList();
   }
 
   Future<PriceAlert> addAlert({
@@ -54,15 +62,19 @@ class AlertsApi {
     required int targetPrice,
     String condition = 'any',
   }) async {
-    final json = await _client.postJson('/api/v1/alerts', body: {
-      'query': query,
-      'mode': mode,
-      'target_price': targetPrice,
-      'condition': condition,
-    });
-    return PriceAlert.fromJson(json);
+    final id = await _db.into(_db.priceAlerts).insert(
+          db.PriceAlertsCompanion.insert(
+            query: query,
+            mode: mode,
+            targetPrice: targetPrice,
+          ),
+        );
+    final row = await (_db.select(_db.priceAlerts)
+          ..where((t) => t.id.equals(id)))
+        .getSingle();
+    return PriceAlert.fromDb(row);
   }
 
   Future<void> deleteAlert(int id) =>
-      _client.delete('/api/v1/alerts/$id');
+      (_db.delete(_db.priceAlerts)..where((t) => t.id.equals(id))).go();
 }

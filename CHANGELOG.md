@@ -2,6 +2,26 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini.
 
+## 2026-10-12 — Fase 3: backend ramping + fitur lokal Dart (Opsi 1)
+
+Backend (`android/backend/`) dipangkas ke endpoint yang tidak bisa dihitung lokal:
+auth ×4, history ×2, `POST /api/v1/chat/ask`, `POST /api/v1/analyze`,
+`POST /api/v1/analyze-bundle`, `GET /api/v1/suggest/{section}`, `/health`,
+`/api/v1/debug/*`. Yang dicabut: wishlist, alerts, stores/nearby, trend,
+builder/random, game ×2, currency/rates, feedback, users/me, files,
+plus endpoint web-legacy (catalog/*, freshness, ingest, /test).
+5 modul service yatim dihapus: `ingestion`, `normalizer`, `listing_quality`,
+`coverage`, `parsing`. Backend tests: 28 passed.
+
+Di Flutter, fitur yang dicabut diimplementasi 100% lokal tanpa ubah UI:
+wishlist & alerts → tabel Drift yang sudah ada; alert checker tetap memakai
+`/api/v1/analyze` untuk harga pasar; stores → `assets/data/stores_jakarta.csv`
++ haversine; builder → port 1:1 alokasi `_ALLOCATIONS` dari katalog bundled;
+game → katalog bundled + rumus skor identik; currency → langsung ke
+open.er-api.com dengan fallback; trend → statistik nyata katalog (tanpa
+grafik time-series palsu); profile & feedback → SharedPreferences.
+Flutter tests diperbarui (alert_check, sync).
+
 ## 2026-10-12 — Scope guard chatbot Bang Worth
 
 `POST /api/v1/chat/ask` sekarang dibatasi ruang lingkupnya: hanya menjawab topik

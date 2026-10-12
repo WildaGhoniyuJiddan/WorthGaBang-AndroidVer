@@ -36,6 +36,14 @@ class _ProfileContentScreenState
   void initState() {
     super.initState();
     _loadBio();
+    _restorePhoto();
+  }
+
+  Future<void> _restorePhoto() async {
+    final path = await ProfileApi.localPhotoPath();
+    if (mounted && path != null) {
+      setState(() => _localPhotoPath = path);
+    }
   }
 
   @override
@@ -125,28 +133,16 @@ class _ProfileContentScreenState
       final kesan = _kesan.text.trim();
       final saran = _saran.text.trim();
       final rating = _rating;
-      final outcome =
-          await ref.read(syncServiceProvider).runOrQueue(
-                kind: 'feedback',
-                payload: {
-                  'rating': rating,
-                  'kesan': kesan,
-                  'saran': saran,
-                },
-                action: () => ref
-                    .read(profileApiProvider)
-                    .sendFeedback(
-                        rating: rating, kesan: kesan, saran: saran),
-              );
+      await ref.read(profileApiProvider).sendFeedback(
+            rating: rating,
+            kesan: kesan,
+            saran: saran,
+          );
       if (!mounted) return;
       _kesan.clear();
       _saran.clear();
-      ref.invalidate(pendingCountProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(outcome == SyncOutcome.sent
-                ? AppStrings.feedbackSent
-                : AppStrings.queuedForSync)),
+        const SnackBar(content: Text(AppStrings.feedbackSent)),
       );
     } catch (e) {
       if (mounted) {

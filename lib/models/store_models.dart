@@ -1,4 +1,4 @@
-/// Model toko (kontrak: B4 GET /api/v1/stores/nearby).
+/// Model toko (lokal, dari stores_jakarta.csv bundled).
 class Store {
   const Store({
     required this.id,

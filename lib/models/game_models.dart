@@ -1,4 +1,4 @@
-/// Model game Tebak Harga (kontrak: B8).
+/// Model game Tebak Harga (lokal, dari katalog bundled).
 class GameQuestion {
   const GameQuestion({
     required this.questionId,

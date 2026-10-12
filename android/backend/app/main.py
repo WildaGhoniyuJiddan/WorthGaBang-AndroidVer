@@ -15,7 +15,7 @@ from .security import (
     SecurityHeadersMiddleware,
     require_job_token,
 )
-from .models import AnalysisLog, LaptopUnit, PCComponent
+from .models import AnalysisLog
 from .schemas import (
     Alternative,
     AnalyzeRequest,
@@ -23,15 +23,9 @@ from .schemas import (
     BundleItemBreakdown,
     BundleRequest,
     BundleResponse,
-    FreshnessResponse,
-    IngestRequest,
-    LaptopResponse,
-    PCComponentResponse,
 )
-from .services.ingestion import ListingInput, ingest_listings
-from .services.analysis import all_freshness, analyze, new_price_anchor, resolve_bundle_item_prices
+from .services.analysis import analyze, resolve_bundle_item_prices
 from .services.scoring import score_price
-from .services.coverage import report_pc_coverage
 from .services.suggest import suggest_components
 from .routers.mobile import router as mobile_router
 from .auth import get_optional_user
@@ -188,44 +182,6 @@ def analyze_bundle(payload: BundleRequest, db: Session = Depends(get_db)) -> Bun
     )
 
 
-@app.get("/api/v1/catalog/pc", response_model=list[PCComponentResponse])
-def pc_catalog(
-    component_type: str | None = Query(default=None),
-    query: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=200),
-    db: Session = Depends(get_db),
-) -> list[PCComponent]:
-    statement = select(PCComponent).order_by(desc(PCComponent.updated_at)).limit(limit)
-    if component_type:
-        statement = statement.where(PCComponent.component_type == component_type)
-    if query:
-        statement = statement.where(PCComponent.model.ilike(f"%{query}%"))
-    return list(db.scalars(statement).all())
-
-
-@app.get("/api/v1/catalog/laptops", response_model=list[LaptopResponse])
-def laptop_catalog(
-    query: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=200),
-    db: Session = Depends(get_db),
-) -> list[LaptopUnit]:
-    statement = select(LaptopUnit).order_by(desc(LaptopUnit.scraped_at)).limit(limit)
-    if query:
-        pattern = f"%{query}%"
-        statement = statement.where(
-            LaptopUnit.model.ilike(pattern)
-            | LaptopUnit.cpu.ilike(pattern)
-            | LaptopUnit.gpu.ilike(pattern)
-            | LaptopUnit.brand.ilike(pattern)
-        )
-    return list(db.scalars(statement).all())
-
-
-@app.get("/api/v1/freshness", response_model=FreshnessResponse)
-def freshness(db: Session = Depends(get_db)) -> FreshnessResponse:
-    return FreshnessResponse(sources=all_freshness(db))
-
-
 @app.get("/api/v1/suggest/{section}")
 def suggest(
     section: str,
@@ -238,43 +194,6 @@ def suggest(
     return {"section": section, "suggestions": suggest_components(db, section, q, limit, condition)}
 
 
-@app.get("/api/v1/catalog/coverage")
-def catalog_coverage(
-    minimum: int = Query(default=3, ge=1, le=50),
-    db: Session = Depends(get_db),
-) -> dict:
-    return report_pc_coverage(db, minimum)
-
-
-@app.post("/api/v1/ingest/{source}")
-def ingest_source(
-    source: str,
-    payload: IngestRequest,
-    _: str = Depends(require_job_token),
-    db: Session = Depends(get_db),
-) -> dict:
-    if source not in {"facebook_marketplace", "tokopedia"}:
-        raise HTTPException(status_code=400, detail="Unsupported source")
-    inserted = ingest_listings(
-        db,
-        source,
-        [
-            ListingInput(
-                title=item.title,
-                price=item.price,
-                url=item.url,
-                spec_text=item.spec_text,
-                category=item.category,
-                condition=item.condition,
-                scraped_at=payload.scraped_at,
-            )
-            for item in payload.items
-        ],
-    )
-    return {"source": source, "received": len(payload.items), "inserted": inserted}
-
-
-# Debug endpoint for database connection
 @app.get("/api/v1/debug/db")
 def debug_db(db: Session = Depends(get_db)) -> dict:
     try:
@@ -294,7 +213,4 @@ def debug_env():
     result['DATABASE_URL_SET'] = 'set' if os.getenv('DATABASE_URL') else 'not set'
     return result
 
-@app.get("/test")
-def test():
-    return {"message": "hello"}
 

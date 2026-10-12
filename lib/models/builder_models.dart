@@ -1,4 +1,4 @@
-/// Model random builder (kontrak: B6 POST /api/v1/builder/random).
+/// Model random builder (lokal, dari katalog bundled).
 class BuildComponent {
   const BuildComponent({required this.name, required this.price});
 

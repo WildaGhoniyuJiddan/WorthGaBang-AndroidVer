@@ -1,26 +1,13 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:worthbang/services/api_exception.dart';
-import 'package:worthbang/services/fake_api_client.dart';
 import 'package:worthbang/services/app_database.dart';
-import 'package:worthbang/services/alerts_api.dart';
-import 'package:worthbang/services/profile_api.dart';
 import 'package:worthbang/services/sync_queue.dart';
 import 'package:worthbang/services/sync_service.dart';
-import 'package:worthbang/services/wishlist_api.dart';
 
 AppDatabase _memDb() => AppDatabase(NativeDatabase.memory());
 
-SyncService _service(SyncQueue q) {
-  final fake = FakeApiClient();
-  return SyncService(
-    queue: q,
-    profile: ProfileApi(fake),
-    wishlist: WishlistApi(fake),
-    alerts: AlertsApi(fake),
-  );
-}
+SyncService _service(SyncQueue q) => SyncService(queue: q);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -45,62 +32,8 @@ void main() {
     });
   });
 
-  group('SyncService.runOrQueue', () {
-    test('sukses → sent, tanpa antrian', () async {
-      SharedPreferences.setMockInitialValues({});
-      final db = _memDb();
-      addTearDown(db.close);
-      final q = SyncQueue(db);
-
-      final out = await _service(q).runOrQueue(
-        kind: 'feedback',
-        payload: {'rating': 5, 'kesan': 'ok', 'saran': '-'},
-        action: () async {},
-      );
-      expect(out, SyncOutcome.sent);
-      expect(await q.count(), 0);
-    });
-
-    test('gagal jaringan (tanpa statusCode) → queued', () async {
-      SharedPreferences.setMockInitialValues({});
-      final db = _memDb();
-      addTearDown(db.close);
-      final q = SyncQueue(db);
-
-      final out = await _service(q).runOrQueue(
-        kind: 'wishlist',
-        payload: {'query': 'RTX 4060', 'mode': 'pc'},
-        action: () =>
-            throw const ApiException('Tidak dapat terhubung'),
-      );
-      expect(out, SyncOutcome.queued);
-      expect(await q.count(), 1);
-      final items = await q.pending();
-      expect(items.single.kind, 'wishlist');
-    });
-
-    test('error server (ada statusCode) → dilempar, tidak diantre',
-        () async {
-      SharedPreferences.setMockInitialValues({});
-      final db = _memDb();
-      addTearDown(db.close);
-      final q = SyncQueue(db);
-
-      await expectLater(
-        _service(q).runOrQueue(
-          kind: 'alert',
-          payload: {},
-          action: () =>
-              throw const ApiException('Validasi gagal', 422),
-        ),
-        throwsA(isA<ApiException>()),
-      );
-      expect(await q.count(), 0);
-    });
-  });
-
   group('SyncService.syncPending', () {
-    test('antrian terkirim via FakeApiClient → kosong', () async {
+    test('antrean lawas dikuras → kosong', () async {
       SharedPreferences.setMockInitialValues({});
       final db = _memDb();
       addTearDown(db.close);

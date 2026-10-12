@@ -7,18 +7,45 @@ final currencyApiProvider = Provider<CurrencyApi>(
   (ref) => CurrencyApi(ref.watch(apiClientProvider)),
 );
 
-/// API kurs (B9 GET /api/v1/currency/rates).
+/// Kurs — sekarang langsung ke API FX publik (tanpa via backend),
+/// dengan fallback konstanta bila offline.
 class CurrencyApi {
   CurrencyApi(this._client);
 
   final ApiClient _client;
 
+  static const _fxUrl = 'https://open.er-api.com/v1/latest/IDR';
+
+  /// Kurs per 1 IDR (mis. 1 IDR = x USD). Offline → fallback.
+  static const fallbackRates = {
+    'USD': 0.000062,
+    'SGD': 0.000083,
+    'MYR': 0.00029,
+  };
+
   Future<CurrencyRates> getRates({String base = 'IDR'}) async {
-    final json = await _client.getJson(
-      '/api/v1/currency/rates',
-      query: {'base': base},
+    try {
+      final json = await _client.getJson(_fxUrl);
+      final r = (json['rates'] as Map?)?.cast<String, dynamic>() ?? {};
+      final rates = <String, double>{};
+      for (final k in ['USD', 'SGD', 'MYR']) {
+        final v = r[k];
+        if (v is num) rates[k] = v.toDouble();
+      }
+      if (rates.isNotEmpty) {
+        return CurrencyRates(
+          base: base,
+          rates: rates,
+          updatedAt: DateTime.now(),
+        );
+      }
+    } catch (_) {
+      // Offline / API down → fallback di bawah.
+    }
+    return CurrencyRates(
+      base: base,
+      rates: Map<String, double>.from(fallbackRates),
     );
-    return CurrencyRates.fromJson(json);
   }
 }
 

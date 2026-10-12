@@ -1,13 +1,14 @@
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/providers/providers.dart';
-import 'package:worthbang/services/api_client.dart';
+import 'package:worthbang/services/app_database.dart' as db;
 
 final wishlistApiProvider = Provider<WishlistApi>(
-  (ref) => WishlistApi(ref.watch(apiClientProvider)),
+  (ref) => WishlistApi(ref.watch(databaseProvider)),
 );
 
-/// Item wishlist (kontrak: B2 GET/POST/DELETE /api/v1/wishlist).
+/// Item wishlist (sekarang 100% lokal — tabel Drift WishlistItems).
 class WishlistItem {
   const WishlistItem({
     required this.id,
@@ -22,6 +23,14 @@ class WishlistItem {
   final String mode;
   final int? targetPrice;
   final DateTime? createdAt;
+
+  factory WishlistItem.fromDb(db.WishlistItem row) => WishlistItem(
+        id: row.id,
+        query: row.query,
+        mode: row.mode,
+        targetPrice: row.targetPrice,
+        createdAt: row.createdAt,
+      );
 
   factory WishlistItem.fromJson(Map<String, dynamic> json) {
     DateTime? created;
@@ -38,15 +47,15 @@ class WishlistItem {
 }
 
 class WishlistApi {
-  WishlistApi(this._client);
+  WishlistApi(this._db);
 
-  final ApiClient _client;
+  final db.AppDatabase _db;
 
   Future<List<WishlistItem>> getWishlist() async {
-    final json = await _client.getJson('/api/v1/wishlist');
-    return ((json['items'] as List?) ?? [])
-        .map((e) => WishlistItem.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final rows = await (_db.select(_db.wishlistItems)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+    return rows.map(WishlistItem.fromDb).toList();
   }
 
   Future<WishlistItem> addWishlist({
@@ -54,12 +63,19 @@ class WishlistApi {
     required String mode,
     int? targetPrice,
   }) async {
-    final Map<String, dynamic> body = {'query': query, 'mode': mode};
-    if (targetPrice != null) body['target_price'] = targetPrice;
-    final json = await _client.postJson('/api/v1/wishlist', body: body);
-    return WishlistItem.fromJson(json);
+    final id = await _db.into(_db.wishlistItems).insert(
+          db.WishlistItemsCompanion.insert(
+            query: query,
+            mode: mode,
+            targetPrice: Value(targetPrice),
+          ),
+        );
+    final row = await (_db.select(_db.wishlistItems)
+          ..where((t) => t.id.equals(id)))
+        .getSingle();
+    return WishlistItem.fromDb(row);
   }
 
   Future<void> deleteWishlist(int id) =>
-      _client.delete('/api/v1/wishlist/$id');
+      (_db.delete(_db.wishlistItems)..where((t) => t.id.equals(id))).go();
 }

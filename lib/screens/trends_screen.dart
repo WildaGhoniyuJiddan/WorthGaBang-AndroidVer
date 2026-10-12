@@ -111,11 +111,13 @@ class _TrendsScreenContentState
                       color: Theme.of(context).colorScheme.error),
                 ),
               ),
-            if (data != null && data.points.isNotEmpty) ...[
+            if (data != null) ...[
               _StatsRow(data: data),
               const SizedBox(height: 12),
-              SizedBox(height: 240, child: _TrendChart(data: data)),
-              const SizedBox(height: 12),
+              if (data.points.isNotEmpty) ...[
+                SizedBox(height: 240, child: _TrendChart(data: data)),
+                const SizedBox(height: 12),
+              ],
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),

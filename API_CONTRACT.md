@@ -4,6 +4,21 @@
 > dan Agent App (repo `WorthGaBang-AndroidVer`, Flutter).
 > Base URL dev: `http://10.0.2.2:8000` (emulator) / `http://<LAN-IP>:8000` (HP fisik).
 > Semua request/response JSON. Auth: `Authorization: Bearer <access_token>` kecuali ditandai Public.
+>
+> ## Revisi 2026-10-12 — Fase 3 (Opsi 1: backend ramping)
+> Backend hanya melayani endpoint yang **tidak bisa** dihitung lokal:
+> `POST /api/v1/auth/*` (register, login, refresh, logout),
+> `GET/POST /api/v1/history`, `POST /api/v1/chat/ask`,
+> `POST /api/v1/analyze`, `POST /api/v1/analyze-bundle`,
+> `GET /api/v1/suggest/{section}`, `GET /health`, `GET /api/v1/debug/*`.
+>
+> Endpoint berikut **DICABUT dari backend** dan diimplementasi 100% lokal di Dart:
+> wishlist (B2) → Drift; alerts (B3) → Drift + `/api/v1/analyze` untuk cek harga;
+> stores (B4) → `assets/data/stores_jakarta.csv`; trend (B5) → statistik katalog lokal;
+> builder (B6) → katalog bundled; game (B8) → katalog bundled;
+> currency (B9) → langsung ke open.er-api.com + fallback;
+> feedback & profile (B9) → SharedPreferences.
+> Bagian B2–B6, B8–B9 di bawah ini dipertahankan sebagai dokumentasi historis.
 
 ## Konvensi
 

@@ -1,42 +1,85 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:worthbang/providers/providers.dart';
-import 'package:worthbang/services/api_client.dart';
 import 'package:worthbang/models/auth_models.dart';
+import 'package:worthbang/providers/auth_controller.dart';
 
 final profileApiProvider = Provider<ProfileApi>(
-  (ref) => ProfileApi(ref.watch(apiClientProvider)),
+  (ref) => ProfileApi(ref),
 );
 
-/// API profil & feedback (B9).
+/// Profil & feedback — sekarang 100% lokal.
+/// Nama & foto tersimpan di SharedPreferences; feedback tersimpan
+/// sebagai riwayat lokal di perangkat (tanpa backend).
 class ProfileApi {
-  ProfileApi(this._client);
+  ProfileApi(this._ref);
 
-  final ApiClient _client;
+  final Ref _ref;
 
-  /// PUT /api/v1/users/me (multipart): nama dan/atau foto.
-  Future<AppUser> updateProfile({String? name, String? photoPath}) async {
-    final json = await _client.putMultipart(
-      '/api/v1/users/me',
-      fields: {'name': ?name},
-      files: {'photo': ?photoPath},
-    );
-    return AppUser.fromJson(json);
+  static const _nameKey = 'profile_name';
+  static const _photoKey = 'profile_photo_path';
+  static const _feedbackKey = 'feedback_history';
+
+  /// Baca path foto lokal tersimpan (untuk restore avatar).
+  static Future<String?> localPhotoPath() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_photoKey);
   }
 
-  /// POST /api/v1/feedback.
+  /// Baca nama lokal tersimpan.
+  static Future<String?> localName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_nameKey);
+  }
+
+  /// Update profil lokal: nama dan/atau foto. Kembalikan user terbarui.
+  Future<AppUser> updateProfile({String? name, String? photoPath}) async {
+    final current = _ref.read(authControllerProvider).user;
+    if (current == null) {
+      throw StateError('Belum login');
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final newName = name ?? await localName() ?? current.name;
+    final newPhoto = photoPath ?? prefs.getString(_photoKey);
+    if (name != null) await prefs.setString(_nameKey, name);
+    if (photoPath != null) await prefs.setString(_photoKey, photoPath);
+    return AppUser(
+      id: current.id,
+      name: newName,
+      email: current.email,
+      photoUrl: newPhoto,
+    );
+  }
+
+  /// Simpan feedback ke riwayat lokal perangkat.
   Future<void> sendFeedback({
     required int rating,
     required String kesan,
     required String saran,
   }) async {
-    await _client.postJson('/api/v1/feedback', body: {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_feedbackKey);
+    final list = raw == null
+        ? <Map<String, dynamic>>[]
+        : (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+    list.add({
       'rating': rating,
       'kesan': kesan,
       'saran': saran,
+      'at': DateTime.now().toIso8601String(),
     });
+    await prefs.setString(_feedbackKey, jsonEncode(list));
+  }
+
+  /// Riwayat feedback lokal (untuk ditampilkan bila perlu).
+  Future<List<Map<String, dynamic>>> feedbackHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_feedbackKey);
+    if (raw == null) return [];
+    return (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
   }
 }
 

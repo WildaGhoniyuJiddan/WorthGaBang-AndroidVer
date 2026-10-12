@@ -1,12 +1,16 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/services/api_client.dart';
 import 'package:worthbang/services/alert_check_service.dart';
 import 'package:worthbang/services/alerts_api.dart';
+import 'package:worthbang/services/app_database.dart';
 import 'package:worthbang/services/price_check_api.dart';
 
-/// Stub ApiClient: alerts tetap, harga pasar bisa diatur per test.
+/// Stub ApiClient: hanya untuk harga pasar (/api/v1/analyze).
+/// Alerts sekarang dari Drift lokal.
 class _StubClient implements ApiClient {
   _StubClient({required this.marketPrice});
 
@@ -18,28 +22,6 @@ class _StubClient implements ApiClient {
   @override
   Future<Map<String, dynamic>> getJson(String path,
       {Map<String, dynamic>? query}) async {
-    if (path == '/api/v1/alerts') {
-      return {
-        'items': [
-          {
-            'id': 5,
-            'query': 'RTX 4060',
-            'mode': 'pc',
-            'target_price': 4300000,
-            'current_price': marketPrice,
-            'is_active': true,
-          },
-          {
-            'id': 6,
-            'query': 'Ryzen 5 5600',
-            'mode': 'pc',
-            'target_price': 1500000,
-            'current_price': 1800000,
-            'is_active': false, // nonaktif → diabaikan
-          },
-        ],
-      };
-    }
     throw UnimplementedError(path);
   }
 
@@ -105,10 +87,31 @@ class _FakeDedup implements AlertDedupStore {
   bool get hasEntry => _m.isNotEmpty;
 }
 
+/// DB memori dengan 2 alert: satu aktif (target 4.3jt), satu nonaktif.
+Future<AppDatabase> _seedDb() async {
+  final db = AppDatabase(NativeDatabase.memory());
+  await db.into(db.priceAlerts).insert(PriceAlertsCompanion.insert(
+        query: 'RTX 4060',
+        mode: 'pc',
+        targetPrice: 4300000,
+      ));
+  await db.into(db.priceAlerts).insert(PriceAlertsCompanion.insert(
+        query: 'Ryzen 5 5600',
+        mode: 'pc',
+        targetPrice: 1500000,
+        isActive: const Value(false),
+      ));
+  return db;
+}
+
 AlertCheckService _service(
-    _StubClient client, _FakeNotifier notifier, _FakeDedup dedup) {
+  AppDatabase db,
+  _StubClient client,
+  _FakeNotifier notifier,
+  _FakeDedup dedup,
+) {
   return AlertCheckService(
-    alertsApi: AlertsApi(client),
+    alertsApi: AlertsApi(db),
     priceCheckApi: PriceCheckApi(client),
     notifier: notifier,
     dedup: dedup,
@@ -116,12 +119,16 @@ AlertCheckService _service(
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('AlertCheckService.checkNow', () {
     test('harga ≤ target → notifikasi sekali (dedup)', () async {
+      final db = await _seedDb();
+      addTearDown(db.close);
       final client = _StubClient(marketPrice: 4200000);
       final notifier = _FakeNotifier();
       final dedup = _FakeDedup();
-      final svc = _service(client, notifier, dedup);
+      final svc = _service(db, client, notifier, dedup);
 
       expect(await svc.checkNow(), 1);
       expect(notifier.sent.length, 1);
@@ -133,10 +140,12 @@ void main() {
     });
 
     test('harga > target → tidak notif, dedup direset', () async {
+      final db = await _seedDb();
+      addTearDown(db.close);
       final client = _StubClient(marketPrice: 4200000);
       final notifier = _FakeNotifier();
       final dedup = _FakeDedup();
-      final svc = _service(client, notifier, dedup);
+      final svc = _service(db, client, notifier, dedup);
 
       expect(await svc.checkNow(), 1);
       expect(dedup.hasEntry, isTrue);
@@ -153,16 +162,18 @@ void main() {
     });
 
     test('alert nonaktif diabaikan', () async {
+      final db = await _seedDb();
+      addTearDown(db.close);
       final client = _StubClient(marketPrice: 1000000);
       final notifier = _FakeNotifier();
-      final svc = _service(client, notifier, _FakeDedup());
-      // Hanya alert id 5 aktif (target 4.3jt, pasar 1jt → terpicu).
-      // Alert id 6 nonaktif meski pasar < target → tidak terpicu.
+      final svc = _service(db, client, notifier, _FakeDedup());
+      // Hanya alert aktif (target 4.3jt, pasar 1jt → terpicu).
+      // Alert nonaktif meski pasar < target → tidak terpicu.
       expect(await svc.checkNow(), 1);
-      expect(notifier.sent.map((e) => e.$1), [5]);
+      expect(notifier.sent.map((e) => e.$1), [1]);
     });
 
-    test('model PriceAlert.fromJson sesuai kontrak B3', () {
+    test('model PriceAlert.fromJson tetap parse', () {
       final a = PriceAlert.fromJson({
         'id': 5,
         'query': 'RTX 4060',
@@ -174,6 +185,31 @@ void main() {
       expect(a.targetPrice, 4300000);
       expect(a.currentPrice, 4600000);
       expect(a.isActive, isTrue);
+    });
+  });
+
+  group('AlertsApi lokal (Drift)', () {
+    test('CRUD round-trip', () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final api = AlertsApi(db);
+
+      expect(await api.getAlerts(), isEmpty);
+
+      final added = await api.addAlert(
+        query: 'RTX 4060',
+        mode: 'pc',
+        targetPrice: 4300000,
+      );
+      expect(added.id, isNonZero);
+      expect(added.query, 'RTX 4060');
+      expect(added.isActive, isTrue);
+
+      final list = await api.getAlerts();
+      expect(list.length, 1);
+
+      await api.deleteAlert(added.id);
+      expect(await api.getAlerts(), isEmpty);
     });
   });
 }

@@ -1,4 +1,4 @@
-/// Model tren harga (kontrak: B5 GET /api/v1/trend).
+/// Model tren harga (lokal, statistik dari katalog bundled).
 class TrendPoint {
   const TrendPoint({required this.date, required this.price});
 
