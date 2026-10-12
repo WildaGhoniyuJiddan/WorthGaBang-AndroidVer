@@ -2,6 +2,15 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini.
 
+## 2026-10-12 — Scope guard chatbot Bang Worth
+
+`POST /api/v1/chat/ask` sekarang dibatasi ruang lingkupnya: hanya menjawab topik
+aplikasi (komponen PC/laptop, harga & kelayakannya, rekomendasi rakitan, cara pakai
+fitur). Dua lapis pertahanan: pre-filter keyword lokal `_is_in_scope()` (pesan
+off-topic langsung ditolak tanpa memanggil Gemini, hemat kuota) + `systemInstruction`
+ke Gemini (sekaligus menutup celah prompt injection via riwayat chat). Hint input
+chat di app diubah menjadi "Tanya soal komponen PC/laptop…".
+
 ## 2026-09-29 — Backend tickets B1–B10 selesai
 
 Endpoint `/api/v1/*` dibangun di repo `WorthGaBang` (folder `backend/app/routers/mobile.py`);

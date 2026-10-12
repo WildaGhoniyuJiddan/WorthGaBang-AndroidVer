@@ -188,6 +188,15 @@
              "total": 7950000, "note": "..." } }
 ```
 > Backend yang panggil Gemini (free tier). App TIDAK pernah pegang API key.
+> **Scope guard:** chatbot hanya melayani topik aplikasi (komponen PC/laptop, harga &
+> kelayakannya, rekomendasi rakitan, cara pakai fitur). Pesan di luar topik langsung
+> ditolak tanpa memanggil Gemini:
+> ```jsonc
+> // request: { "message": "bagi resep rendang dong" }
+> // response 200
+> { "reply": "Hmm, itu di luar keahlianku 😅 Aku Bang Worth, asisten khusus komponen PC & laptop - tanya soal harga, rakitan, atau perbandingan komponen aja ya!",
+>   "build": null }
+> ```
 
 ### B8 — Game
 

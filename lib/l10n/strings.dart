@@ -147,7 +147,7 @@ abstract final class AppStrings {
 
   // Chatbot Bang Worth (T13).
   static const chatTitle = 'Tanya Bang Worth';
-  static const chatHint = 'Tulis pertanyaan…';
+  static const chatHint = 'Tanya soal komponen PC/laptop…';
   static const chatWelcome =
       'Halo! Aku Bang Worth 🤖. Tanya soal harga komponen, minta rakitan PC, atau tanya fitur aplikasi ini.';
   static const chatError = 'Gagal menghubungi Bang Worth';

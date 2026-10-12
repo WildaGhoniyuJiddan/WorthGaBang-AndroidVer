@@ -375,6 +375,33 @@ def test_chat_no_key_503(client):
     assert r.status_code == 503
 
 
+# ---------------- B7: chat scope guard ----------------
+
+def test_chat_offtopic_refused_without_gemini_call(client):
+    # Pre-filter jalan sebelum cek API key: off-topic selalu 200 + penolakan.
+    r = client.post("/api/v1/chat/ask", json={"message": "bagi resep rendang dong"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["build"] is None
+    assert "di luar keahlianku" in body["reply"]
+
+
+@pytest.mark.parametrize("msg,expected", [
+    ("rakit PC 8 juta", True),
+    ("rtx 4060 harganya berapa?", True),
+    ("halo bang", True),
+    ("5 juta cukup untuk laptop kuliah?", True),
+    ("p", True),
+    ("bagi resep rendang", False),
+    ("siapa presiden indonesia?", False),
+    ("cara memprogram robot", False),  # jebakan: mengandung "ram"/"pro"
+    ("tolong kerjakan PR matematikaku", False),
+])
+def test_is_in_scope(msg, expected):
+    from app.routers.mobile import _is_in_scope
+    assert _is_in_scope(msg) is expected
+
+
 # ---------------- B8: game ----------------
 
 def _seed_components():
