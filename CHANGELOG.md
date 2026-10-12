@@ -13,7 +13,7 @@ chat di app diubah menjadi "Tanya soal komponen PC/laptop…".
 
 ## 2026-09-29 — Backend tickets B1–B10 selesai
 
-Endpoint `/api/v1/*` dibangun di repo `WorthGaBang` (folder `backend/app/routers/mobile.py`);
+Endpoint `/api/v1/*` dibangun di repo `WorthGaBang` (folder `android/backend/app/routers/mobile.py`);
 spesifikasi lengkap ada di `API_CONTRACT.md`. App ticket T0 & T1 juga mulai dikerjakan.
 
 | Ticket | Judul | Status |

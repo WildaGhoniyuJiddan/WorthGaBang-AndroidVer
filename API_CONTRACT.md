@@ -1,6 +1,6 @@
 # API Contract — WorthBang Android ↔ FastAPI Backend
 
-> Single source of truth untuk Agent Backend (repo `WorthGaBang`, folder `backend/`)
+> Single source of truth untuk Agent Backend (repo `WorthGaBang`, folder `android/backend/`)
 > dan Agent App (repo `WorthGaBang-AndroidVer`, Flutter).
 > Base URL dev: `http://10.0.2.2:8000` (emulator) / `http://<LAN-IP>:8000` (HP fisik).
 > Semua request/response JSON. Auth: `Authorization: Bearer <access_token>` kecuali ditandai Public.
