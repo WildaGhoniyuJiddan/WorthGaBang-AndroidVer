@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/features/tools/data/currency_api.dart';
+import 'package:worthbang/services/currency_api.dart';
 
 void main() {
   group('CurrencyRates.fromJson (kontrak B9)', () {

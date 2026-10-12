@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/features/trends/data/trend_models.dart';
+import 'package:worthbang/models/trend_models.dart';
 
 void main() {
   group('TrendData.fromJson (kontrak B5)', () {

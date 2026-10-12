@@ -1,8 +1,8 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/core/storage/app_database.dart';
-import 'package:worthbang/features/price_check/data/history_repository.dart';
-import 'package:worthbang/features/price_check/data/models.dart';
+import 'package:worthbang/services/app_database.dart';
+import 'package:worthbang/services/history_repository.dart';
+import 'package:worthbang/models/price_check_models.dart';
 
 AnalysisResult _result(String query, int price) => AnalysisResult(
       mode: 'pc',

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/features/price_check/data/models.dart';
-import 'package:worthbang/features/search/data/search_filter.dart';
+import 'package:worthbang/models/price_check_models.dart';
+import 'package:worthbang/models/search_filter.dart';
 
 List<PriceComparison> _sample() => const [
       PriceComparison(

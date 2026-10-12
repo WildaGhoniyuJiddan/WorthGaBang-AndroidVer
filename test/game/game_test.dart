@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:worthbang/features/game/data/game_api.dart';
-import 'package:worthbang/features/game/data/game_models.dart';
+import 'package:worthbang/services/game_api.dart';
+import 'package:worthbang/models/game_models.dart';
 
 void main() {
   group('scoreGuess (rumus kontrak B8)', () {

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'app/app.dart';
-import 'core/notifications/notification_service.dart';
-import 'core/notifications/work_manager.dart';
+import 'package:worthbang/utils/app.dart';
+import 'package:worthbang/services/notification_service.dart';
+import 'package:worthbang/services/work_manager.dart';
 
 /// Entry point aplikasi WorthBang.
 ///

@@ -1,14 +1,14 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:worthbang/core/network/api_exception.dart';
-import 'package:worthbang/core/network/fake_api_client.dart';
-import 'package:worthbang/core/storage/app_database.dart';
-import 'package:worthbang/features/alerts/data/alerts_api.dart';
-import 'package:worthbang/features/profile/data/profile_api.dart';
-import 'package:worthbang/features/sync/data/sync_queue.dart';
-import 'package:worthbang/features/sync/data/sync_service.dart';
-import 'package:worthbang/features/wishlist/data/wishlist_api.dart';
+import 'package:worthbang/services/api_exception.dart';
+import 'package:worthbang/services/fake_api_client.dart';
+import 'package:worthbang/services/app_database.dart';
+import 'package:worthbang/services/alerts_api.dart';
+import 'package:worthbang/services/profile_api.dart';
+import 'package:worthbang/services/sync_queue.dart';
+import 'package:worthbang/services/sync_service.dart';
+import 'package:worthbang/services/wishlist_api.dart';
 
 AppDatabase _memDb() => AppDatabase(NativeDatabase.memory());
 

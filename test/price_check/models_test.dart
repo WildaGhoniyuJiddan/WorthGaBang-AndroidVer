@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/core/widgets/verdict_badge.dart';
-import 'package:worthbang/features/price_check/data/models.dart';
+import 'package:worthbang/widgets/verdict_badge.dart';
+import 'package:worthbang/models/price_check_models.dart';
 
 void main() {
   group('AnalysisResult.fromJson (kontrak /analyze)', () {

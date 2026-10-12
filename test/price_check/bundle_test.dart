@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/features/price_check/data/bundle_models.dart';
+import 'package:worthbang/models/bundle_models.dart';
 
 void main() {
   group('BundleResult.fromJson (kontrak /analyze-bundle)', () {

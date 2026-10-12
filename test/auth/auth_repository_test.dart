@@ -1,10 +1,10 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/core/network/api_exception.dart';
-import 'package:worthbang/core/network/fake_api_client.dart';
-import 'package:worthbang/core/secure/token_storage.dart';
-import 'package:worthbang/core/storage/app_database.dart';
-import 'package:worthbang/features/auth/data/auth_repository.dart';
+import 'package:worthbang/services/api_exception.dart';
+import 'package:worthbang/services/fake_api_client.dart';
+import 'package:worthbang/services/token_storage.dart';
+import 'package:worthbang/services/app_database.dart';
+import 'package:worthbang/services/auth_repository.dart';
 
 void main() {
   late FakeApiClient client;

@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:worthbang/core/network/api_client.dart';
-import 'package:worthbang/features/alerts/data/alert_check_service.dart';
-import 'package:worthbang/features/alerts/data/alerts_api.dart';
-import 'package:worthbang/features/price_check/data/price_check_api.dart';
+import 'package:worthbang/services/api_client.dart';
+import 'package:worthbang/services/alert_check_service.dart';
+import 'package:worthbang/services/alerts_api.dart';
+import 'package:worthbang/services/price_check_api.dart';
 
 /// Stub ApiClient: alerts tetap, harga pasar bisa diatur per test.
 class _StubClient implements ApiClient {
