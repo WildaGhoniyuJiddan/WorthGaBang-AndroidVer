@@ -10,6 +10,7 @@ import 'package:worthbang/screens/stores_screen.dart';
 import 'package:worthbang/screens/tools_screen.dart';
 import 'package:worthbang/screens/trends_screen.dart';
 import 'package:worthbang/screens/wishlist_screen.dart';
+import 'package:worthbang/widgets/app_logo.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -77,7 +78,13 @@ class HomeScreen extends StatelessWidget {
     final colors = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.homeTitle)),
+      appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8),
+          child: AppLogo(size: 40, borderRadius: 10),
+        ),
+        title: const Text(AppStrings.homeTitle),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         children: [

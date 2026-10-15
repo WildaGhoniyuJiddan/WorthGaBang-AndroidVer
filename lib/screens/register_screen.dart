@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/providers/auth_controller.dart';
+import 'package:worthbang/widgets/app_logo.dart';
 
 /// Layar pendaftaran akun baru (langsung login bila sukses — kontrak B1).
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -31,11 +32,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    final ok = await ref.read(authControllerProvider.notifier).register(
-          _name.text.trim(),
-          _email.text.trim(),
-          _password.text,
-        );
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .register(_name.text.trim(), _email.text.trim(), _password.text);
     if (ok && mounted) context.go('/home');
   }
 
@@ -53,6 +52,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Center(child: AppLogo(size: 88, borderRadius: 22)),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _name,
                   decoration: const InputDecoration(
@@ -83,9 +84,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     labelText: AppStrings.passwordLabel,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscure
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined),
+                      icon: Icon(
+                        _obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
@@ -95,9 +98,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 if (state.error != null) ...[
                   const SizedBox(height: 12),
-                  Text(state.error!,
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.error)),
+                  Text(
+                    state.error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 24),
                 FilledButton(

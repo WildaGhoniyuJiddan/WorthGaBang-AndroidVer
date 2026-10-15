@@ -9,6 +9,8 @@ import 'package:worthbang/services/alert_check_service.dart';
 import 'package:worthbang/services/profile_api.dart';
 import 'package:worthbang/services/sync_queue.dart';
 import 'package:worthbang/services/sync_service.dart';
+import 'package:worthbang/l10n/strings.dart';
+
 import 'router.dart';
 import 'theme.dart';
 
@@ -68,10 +70,9 @@ class _WorthBangAppState extends ConsumerState<WorthBangApp> {
       if (wasOffline == true && isOffline == false) _syncPending();
     });
     final router = ref.watch(routerProvider);
-    final themeMode =
-        ref.watch(settingsControllerProvider).orDefault.themeMode;
+    final themeMode = ref.watch(settingsControllerProvider).orDefault.themeMode;
     return MaterialApp.router(
-      title: 'WorthBang',
+      title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

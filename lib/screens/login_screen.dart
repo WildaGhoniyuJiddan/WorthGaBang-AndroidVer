@@ -6,6 +6,7 @@ import 'package:worthbang/providers/providers.dart';
 import 'package:worthbang/providers/auth_controller.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/auth_repository.dart';
+import 'package:worthbang/widgets/app_logo.dart';
 
 /// Layar masuk: email + password, opsi biometric, link ke registrasi.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -69,6 +70,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Center(child: AppLogo(size: 88, borderRadius: 22)),
+                const SizedBox(height: 20),
                 Text(AppStrings.appTagline,
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 24),

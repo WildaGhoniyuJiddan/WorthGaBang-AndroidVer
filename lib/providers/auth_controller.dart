@@ -28,13 +28,12 @@ class AuthState {
     AppUser? user,
     String? error,
     bool? isLoading,
-  }) =>
-      AuthState(
-        status: status ?? this.status,
-        user: user ?? this.user,
-        error: error,
-        isLoading: isLoading ?? this.isLoading,
-      );
+  }) => AuthState(
+    status: status ?? this.status,
+    user: user ?? this.user,
+    error: error,
+    isLoading: isLoading ?? this.isLoading,
+  );
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -46,8 +45,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
-final biometricServiceProvider =
-    Provider<BiometricService>((ref) => BiometricService());
+final biometricServiceProvider = Provider<BiometricService>(
+  (ref) => BiometricService(),
+);
 
 /// Controller sesi: login, register, restore, logout paksa.
 class AuthController extends Notifier<AuthState> {
@@ -63,10 +63,25 @@ class AuthController extends Notifier<AuthState> {
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
   Future<void> _restore() async {
+    final storage = ref.read(tokenStorageProvider);
+    final refreshToken = await storage.readRefreshToken();
+    final biometricEnabled = await storage.isBiometricEnabled();
+    final biometricAvailable = await ref
+        .read(biometricServiceProvider)
+        .isAvailable;
+    if (refreshToken != null &&
+        refreshToken.isNotEmpty &&
+        biometricEnabled &&
+        biometricAvailable) {
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+      return;
+    }
+
     final user = await _repo.restoreSession();
     state = state.copyWith(
-      status:
-          user == null ? AuthStatus.unauthenticated : AuthStatus.authenticated,
+      status: user == null
+          ? AuthStatus.unauthenticated
+          : AuthStatus.authenticated,
       user: user,
     );
   }
@@ -134,5 +149,6 @@ class AuthController extends Notifier<AuthState> {
   }
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);

@@ -8,6 +8,7 @@ import 'package:worthbang/services/app_database.dart';
 import 'package:worthbang/models/auth_models.dart';
 import 'package:worthbang/providers/auth_controller.dart';
 import 'package:worthbang/l10n/strings.dart';
+import 'package:worthbang/widgets/app_logo.dart';
 
 /// Stub auth: langsung authenticated agar guard router tidak redirect ke /login.
 class _FakeAuthController extends AuthController {
@@ -61,6 +62,7 @@ void main() {
     expect(find.text(AppStrings.homeGreeting), findsOneWidget);
     expect(find.text(AppStrings.priceCheckTitle), findsOneWidget);
     expect(find.text(AppStrings.homeExploreTitle), findsOneWidget);
+    expect(find.byType(AppLogo), findsOneWidget);
 
     // Pindah ke tab Cari.
     await tester.tap(navDestination(1));
