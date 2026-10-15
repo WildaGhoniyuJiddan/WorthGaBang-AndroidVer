@@ -1029,22 +1029,28 @@ def _laptop_benchmark_advice(request: AnalyzeRequest, comparisons, spec_map: dic
 def _benchmark_advice(request: AnalyzeRequest, result) -> tuple[str, list[dict]]:
     """Advice alternatif: "di harga segitu lebih baik X" berdasar skor benchmark.
 
-    Diutamakan skor KONSENSUS multi-sumber (2026-10-15); fallback ke PassMark
-    tunggal bila komponen tak punya skor konsensus.
+    PassMark dipakai untuk memverifikasi performa bila model tersedia di katalog
+    tersebut; skor konsensus hanya dipakai untuk model tanpa skor PassMark.
 
     Return (recommendation_tambahan, alternatives). Kosong kalau model gak
     ketemu di katalog benchmark atau tidak ada kandidat yang layak.
     """
     ctype = request.component_type or component_type_from_query(request.query)
-    alts = better_alternatives_consensus(
-        request.query, ctype, request.price, USD_TO_IDR)
-    use_consensus = bool(alts)
-    if not alts:
+    # Benchmark PassMark adalah guard performa yang konsisten untuk menentukan
+    # apakah sebuah komponen benar-benar lebih kencang dari barang yang dicek.
+    base_passmark = passmark_score(request.query, ctype)
+    if base_passmark:
         alts = better_alternatives(request.query, ctype, request.price, USD_TO_IDR)
+        use_consensus = False
+    else:
+        alts = better_alternatives_consensus(
+            request.query, ctype, request.price, USD_TO_IDR)
+        use_consensus = bool(alts)
     if not alts:
         return "", []
     best = alts[0]
     est_price_str = f"{best['est_price_idr']:,}".replace(",", ".")
+    budget_price_str = f"{request.price:,}".replace(",", ".")
     if use_consensus:
         # Skor konsensus 0-100 multi-sumber.
         score_str = f"{best['score']}/100"
@@ -1056,13 +1062,15 @@ def _benchmark_advice(request: AnalyzeRequest, result) -> tuple[str, list[dict]]
     gain_str = f"+{best['gain_percent']}%"
     if result.verdict in ("worth it", "wajar"):
         advice = (
-            f"Ada alternatif dengan performa lebih tinggi di kisaran harga serupa: {best['name']} "
-            f"(performa {gain_str}, est. Rp{est_price_str}, {src_str})."
+            f"Dengan budget input Rp{budget_price_str}, ada alternatif dengan performa lebih tinggi "
+            f"yang masih masuk budget: {best['name']} "
+            f"(performa {gain_str}, estimasi Rp{est_price_str}, {src_str})."
         )
     else:
         advice = (
-            f"Di harga segitu lebih baik {best['name']}: performa {gain_str} "
-            f"(est. Rp{est_price_str}) dengan {src_str}."
+            f"Dengan budget input Rp{budget_price_str}, alternatif performa lebih tinggi yang masih "
+            f"masuk budget adalah {best['name']} "
+            f"(performa {gain_str}, estimasi Rp{est_price_str}, {src_str})."
         )
     return advice, alts
 

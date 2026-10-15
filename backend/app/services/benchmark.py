@@ -147,8 +147,8 @@ def better_alternatives(
         if vram_kept:
             pool = vram_kept
 
-    # paling dekat harga (realistis dibeli), lalu performa tertinggi
-    pool.sort(key=lambda e: (e["price_usd"], -e["score"]))
+    # Pilih performa tertinggi yang masih masuk budget; harga jadi tie-breaker.
+    pool.sort(key=lambda e: (-e["score"], e["price_usd"]))
     return [
         {
             "name": entry["name"],
@@ -393,7 +393,8 @@ def better_alternatives_consensus(
         if vram_kept:
             pool = vram_kept
 
-    pool.sort(key=lambda e: (e["price_usd"], -e["consensus_score"]))
+    # Pilih skor tertinggi yang masih masuk budget; harga jadi tie-breaker.
+    pool.sort(key=lambda e: (-e["consensus_score"], e["price_usd"]))
     out = []
     for e in pool[:max_results]:
         gain_pct = 0

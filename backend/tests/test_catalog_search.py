@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.db import Base
 from app.models import RawListing
 from app.schemas import AnalyzeRequest
-from app.services.analysis import analyze, search_comparisons
+from app.services.analysis import _benchmark_advice, analyze, search_comparisons
+from app.services.scoring import ScoreResult
 
 
 def test_pc_analysis_includes_retail_catalog_without_marketplace_data():
@@ -82,3 +83,48 @@ def test_search_comparisons_returns_catalog_results_without_price_analysis():
 
     assert results
     assert all(item.source == "komponen_retail" for item in results)
+
+
+def test_benchmark_alternatives_use_input_budget_and_real_performance():
+    request = AnalyzeRequest(
+        mode="pc",
+        query="RTX 4060",
+        component_type="gpu",
+        price=10_000_000,
+    )
+    result = ScoreResult(
+        score=30,
+        verdict="kemahalan",
+        recommendation="Harga kemahalan.",
+        reference_price=5_000_000,
+        delta_percent=100,
+    )
+
+    advice, alternatives = _benchmark_advice(request, result)
+
+    assert alternatives
+    assert all(item["est_price_idr"] <= request.price for item in alternatives)
+    assert alternatives[0]["name"] == "Radeon RX 9070"
+    assert "budget input Rp10.000.000" in advice
+    assert "Rp9.619.318" in advice
+
+
+def test_benchmark_does_not_use_inconsistent_consensus_if_passmark_exists():
+    request = AnalyzeRequest(
+        mode="pc",
+        query="RTX 4060",
+        component_type="gpu",
+        price=5_000_000,
+    )
+    result = ScoreResult(
+        score=30,
+        verdict="kemahalan",
+        recommendation="Harga kemahalan.",
+        reference_price=2_000_000,
+        delta_percent=150,
+    )
+
+    advice, alternatives = _benchmark_advice(request, result)
+
+    assert alternatives == []
+    assert advice == ""

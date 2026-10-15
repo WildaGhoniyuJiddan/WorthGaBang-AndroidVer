@@ -53,6 +53,7 @@
                  "label": "1 jam lalu", "is_stale": false, "primary_source": "tokopedia" } }
 ```
 For `mode: "pc"`, `comparisons` also includes matching new products from the bundled retail catalog (`source: "komponen_retail"`, `condition: "new"`, and `listing_url: null`). These catalog products remain available when marketplace listings have not been ingested yet; they are not marketplace listings.
+Benchmark alternatives use the submitted `price` as the maximum estimated purchase budget and are ranked by highest verified performance within that budget. PassMark verifies performance when available; consensus-only candidates are used only when the input model has no PassMark score.
 
 ### POST /api/v1/search (Public)
 Search listings without price scoring or benchmark recommendations. This is the endpoint used by the Cari Produk screen.
