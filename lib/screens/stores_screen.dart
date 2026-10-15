@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +33,8 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
   LatLng _center = const LatLng(_demoLat, _demoLng);
   bool _usingDemoLocation = true;
   bool _mapReady = false;
+  bool _isLocating = false;
+  String? _locationMessage;
 
   @override
   void initState() {
@@ -46,58 +50,110 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
   }
 
   Future<void> _locateAndLoad() async {
+    if (_isLocating) return;
+    setState(() {
+      _isLocating = true;
+      _locationMessage = null;
+    });
+    String? locationMessage;
     try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        locationMessage =
+            'Aktifkan layanan lokasi/GPS untuk memakai lokasi Anda.';
+        return;
+      }
+
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.always ||
-          perm == LocationPermission.whileInUse) {
-        final pos = await Geolocator.getCurrentPosition(
-          locationSettings:
-              const LocationSettings(accuracy: LocationAccuracy.medium),
-        ).timeout(const Duration(seconds: 8));
-        _center = LatLng(pos.latitude, pos.longitude);
-        _usingDemoLocation = false;
-        if (_mapReady) _mapController.move(_center, 13);
+
+      if (perm == LocationPermission.deniedForever) {
+        locationMessage = 'Izin lokasi diblokir. Buka Pengaturan aplikasi untuk mengizinkannya.';
+        return;
       }
-    } catch (_) {
-      // Tetap pakai lokasi demo.
+
+      if (perm != LocationPermission.always &&
+          perm != LocationPermission.whileInUse) {
+        locationMessage =
+            'Izin lokasi ditolak. Peta tetap memakai lokasi demo Jakarta.';
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      ).timeout(const Duration(seconds: 12));
+      if (!mounted) return;
+      final location = LatLng(pos.latitude, pos.longitude);
+      setState(() {
+        _center = location;
+        _usingDemoLocation = false;
+      });
+      if (_mapReady) _mapController.move(location, 13);
+    } on LocationServiceDisabledException {
+      locationMessage =
+          'Aktifkan layanan lokasi/GPS untuk memakai lokasi Anda.';
+    } on TimeoutException {
+      locationMessage =
+          'Lokasi belum ditemukan. Pastikan GPS aktif lalu coba lagi.';
+    } catch (e) {
+      locationMessage = 'Lokasi gagal didapatkan: $e';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLocating = false;
+          _locationMessage = locationMessage;
+        });
+        await _load();
+      }
     }
-    await _load();
   }
 
   Future<void> _load() async {
     setState(() => _state = const ApiLoading());
     try {
-      final stores = await ref.read(storesApiProvider).nearby(
-            lat: _center.latitude,
-            lng: _center.longitude,
-          );
+      final stores = await ref
+          .read(storesApiProvider)
+          .nearby(lat: _center.latitude, lng: _center.longitude);
+      if (!mounted) return;
       setState(() => _state = ApiSuccess(stores));
     } catch (e) {
+      if (!mounted) return;
       setState(() => _state = ApiError(e.toString()));
+    }
+  }
+
+  Future<void> _openLocationSettings() async {
+    final opened = await Geolocator.openAppSettings();
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pengaturan aplikasi tidak dapat dibuka.'),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = _state;
-    final stores =
-        state is ApiSuccess<List<Store>> ? state.data : null;
+    final stores = state is ApiSuccess<List<Store>> ? state.data : null;
     final q = _query.text.trim();
-    final withPrice = (stores ?? [])
-        .map((s) => (store: s, price: q.isEmpty ? null : s.priceFor(q)))
-        .toList()
-      ..sort((a, b) {
-        // Yang punya harga dulu, termurah pertama; tanpa harga urut jarak.
-        if (a.price != null && b.price != null) {
-          return a.price!.compareTo(b.price!);
-        }
-        if (a.price != null) return -1;
-        if (b.price != null) return 1;
-        return a.store.distanceKm.compareTo(b.store.distanceKm);
-      });
+    final withPrice =
+        (stores ?? [])
+            .map((s) => (store: s, price: q.isEmpty ? null : s.priceFor(q)))
+            .toList()
+          ..sort((a, b) {
+            // Yang punya harga dulu, termurah pertama; tanpa harga urut jarak.
+            if (a.price != null && b.price != null) {
+              return a.price!.compareTo(b.price!);
+            }
+            if (a.price != null) return -1;
+            if (b.price != null) return 1;
+            return a.store.distanceKm.compareTo(b.store.distanceKm);
+          });
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.storesTitle)),
@@ -127,61 +183,99 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                 ],
               ),
             ),
-            if (_usingDemoLocation)
-              const Padding(
+            if (_usingDemoLocation || _locationMessage != null)
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  AppStrings.demoLocationNote,
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _locationMessage ?? AppStrings.demoLocationNote,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                    if (_locationMessage?.contains('Pengaturan') ?? false)
+                      TextButton(
+                        onPressed: _openLocationSettings,
+                        child: const Text('Pengaturan'),
+                      ),
+                  ],
                 ),
               ),
             SizedBox(
               height: 220,
-              child: FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: _center,
-                  initialZoom: 13,
-                  onMapReady: () {
-                    _mapReady = true;
-                    _mapController.move(_center, 13);
-                  },
-                ),
+              child: Stack(
                 children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    // WAJIB: identifikasi aplikasi ke tile server OSM
-                    // (tanpa ini request bisa diblokir).
-                    userAgentPackageName: 'com.worthbang.worthbang',
-                    maxNativeZoom: 19,
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _center,
-                        width: 40,
-                        height: 40,
-                        child: const Icon(Icons.my_location,
-                            color: Colors.blue, size: 32),
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _center,
+                      initialZoom: 13,
+                      onMapReady: () {
+                        _mapReady = true;
+                        _mapController.move(_center, 13);
+                      },
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        // WAJIB: identifikasi aplikasi ke tile server OSM
+                        // (tanpa ini request bisa diblokir).
+                        userAgentPackageName: 'com.worthbang.worthbang',
+                        maxNativeZoom: 19,
                       ),
-                      for (final s in stores ?? [])
-                        Marker(
-                          point: LatLng(s.lat, s.lng),
-                          width: 40,
-                          height: 40,
-                          child: const Icon(Icons.location_on,
-                              color: Colors.red, size: 32),
-                        ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _center,
+                            width: 40,
+                            height: 40,
+                            child: const Icon(
+                              Icons.my_location,
+                              color: Colors.blue,
+                              size: 32,
+                            ),
+                          ),
+                          for (final s in stores ?? [])
+                            Marker(
+                              point: LatLng(s.lat, s.lng),
+                              width: 40,
+                              height: 40,
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Colors.red,
+                                size: 32,
+                              ),
+                            ),
+                        ],
+                      ),
+                      // Wajib lisensi OSM: tampilkan atribusi kontributor.
+                      RichAttributionWidget(
+                        attributions: [
+                          TextSourceAttribution('OpenStreetMap contributors'),
+                        ],
+                      ),
                     ],
                   ),
-                  // Wajib lisensi OSM: tampilkan atribusi kontributor.
-                  RichAttributionWidget(
-                    attributions: [
-                      TextSourceAttribution(
-                        'OpenStreetMap contributors',
-                      ),
-                    ],
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: FloatingActionButton.small(
+                      heroTag: 'stores-current-location',
+                      tooltip: 'Ke lokasi saya',
+                      onPressed: _isLocating ? null : _locateAndLoad,
+                      child: _isLocating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.my_location),
+                    ),
                   ),
                 ],
               ),
@@ -189,65 +283,65 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
             Expanded(
               child: switch (state) {
                 ApiLoading() => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: CircularProgressIndicator(),
+                ),
                 ApiError<List<Store>> e => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(e.message,
-                          style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .error)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      e.message,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
-                _ => withPrice.isEmpty
-                    ? const Center(
-                        child: Text(AppStrings.storesEmpty))
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: withPrice.length,
-                        itemBuilder: (context, i) {
-                          final entry = withPrice[i];
-                          final s = entry.store;
-                          return Card(
-                            child: ListTile(
-                              leading: const Icon(Icons.store),
-                              title: Text(s.name),
-                              subtitle: Text(
-                                '${s.address}\n${s.distanceKm.toStringAsFixed(1)} km',
-                              ),
-                              isThreeLine: true,
-                              trailing: entry.price != null
-                                  ? Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        if (i == 0 &&
-                                            withPrice.length > 1)
-                                          const Text(
-                                            AppStrings.cheapestLabel,
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.green,
+                ),
+                _ =>
+                  withPrice.isEmpty
+                      ? const Center(child: Text(AppStrings.storesEmpty))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: withPrice.length,
+                          itemBuilder: (context, i) {
+                            final entry = withPrice[i];
+                            final s = entry.store;
+                            return Card(
+                              child: ListTile(
+                                leading: const Icon(Icons.store),
+                                title: Text(s.name),
+                                subtitle: Text(
+                                  '${s.address}\n${s.distanceKm.toStringAsFixed(1)} km',
+                                ),
+                                isThreeLine: true,
+                                trailing: entry.price != null
+                                    ? Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          if (i == 0 && withPrice.length > 1)
+                                            const Text(
+                                              AppStrings.cheapestLabel,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          Text(
+                                            formatRupiah(entry.price!),
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        Text(
-                                          formatRupiah(entry.price!),
-                                          style: const TextStyle(
-                                              fontWeight:
-                                                  FontWeight.bold),
-                                        ),
-                                      ],
-                                    )
-                                  : null,
-                            ),
-                          );
-                        },
-                      ),
+                                        ],
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
               },
             ),
           ],
