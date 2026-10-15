@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'package:worthbang/screens/history_screen.dart';
-import 'package:worthbang/screens/price_check_screen.dart';
 import 'package:worthbang/screens/profile_screen.dart';
 import 'package:worthbang/screens/search_screen.dart';
 
-/// Tab Beranda: form cek harga (T3).
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => const PriceCheckScreen();
-}
+export 'home_screen.dart' show HomeScreen;
 
 /// Tab Cari: filter & sort hasil (T5).
 class SearchScreen extends StatelessWidget {

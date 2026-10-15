@@ -14,8 +14,18 @@ abstract final class AppStrings {
 
   // Placeholder tiap tab (diganti screen asli di tiket berikutnya).
   static const homeTitle = 'Beranda';
-  static const homePlaceholder =
-      'Form cek harga akan hadir di sini (T2: Price Check).';
+  static const homeGreeting = 'Mau cek harga apa hari ini?';
+  static const homeExploreTitle = 'Jelajahi fitur';
+  static const homePriceCheckSubtitle =
+      'Bandingkan harga sebelum memutuskan membeli.';
+  static const homeBuilderSubtitle = 'Buat rekomendasi rakitan PC.';
+  static const homeSearchSubtitle = 'Temukan produk dan bandingkan listing.';
+  static const homeTrendsSubtitle = 'Lihat ringkasan tren harga.';
+  static const homeStoresSubtitle = 'Cari toko komputer di sekitar.';
+  static const homeToolsSubtitle = 'Konversi mata uang dan zona waktu.';
+  static const homeWishlistSubtitle = 'Simpan produk dan pantau target.';
+  static const homeGameSubtitle = 'Tebak harga komponen PC.';
+  static const homeChatSubtitle = 'Tanya seputar PC dan laptop.';
   static const searchTitle = 'Cari';
   static const searchPlaceholder =
       'Filter & sortir hasil akan hadir di sini (T4: Search).';
