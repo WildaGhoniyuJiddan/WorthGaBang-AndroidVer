@@ -1,4 +1,4 @@
-/// Model toko (lokal, dari stores_jakarta.csv bundled).
+/// Model toko (lokal, dari dataset CSV toko yang dibundel).
 class Store {
   const Store({
     required this.id,

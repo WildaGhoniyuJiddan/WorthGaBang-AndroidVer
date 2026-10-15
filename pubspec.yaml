@@ -89,6 +89,7 @@ flutter:
     - assets/icon.png
     - assets/data/retail_catalog.json
     - assets/data/stores_jakarta.csv
+    - backend/app/data/stores_yogyakarta.csv
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/models/store_models.dart';
+import 'package:worthbang/services/stores_api.dart';
 
 Store _store(int id, String name, Map<String, int> prices, double dist) =>
     Store(
@@ -13,6 +14,23 @@ Store _store(int id, String name, Map<String, int> prices, double dist) =>
     );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('StoresApi bundled datasets', () {
+    test('memuat dan mengurutkan toko Yogyakarta berdasarkan lokasi', () async {
+      final stores = await StoresApi().nearby(
+        lat: -7.78063,
+        lng: 110.37561,
+        radiusKm: 10,
+      );
+
+      expect(stores, isNotEmpty);
+      expect(stores.first.name, 'Computa');
+      expect(stores.any((store) => store.name == 'ELS Computer'), isTrue);
+      expect(stores.map((store) => store.id).toSet().length, stores.length);
+    });
+  });
+
   group('Store.fromJson (kontrak B4)', () {
     test('parse response lengkap', () {
       final s = Store.fromJson({

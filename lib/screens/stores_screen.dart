@@ -26,9 +26,11 @@ class StoresScreen extends ConsumerStatefulWidget {
 
 class _StoresScreenState extends ConsumerState<StoresScreen> {
   final _query = TextEditingController();
+  final _mapController = MapController();
   ApiResult<List<Store>>? _state;
   LatLng _center = const LatLng(_demoLat, _demoLng);
   bool _usingDemoLocation = true;
+  bool _mapReady = false;
 
   @override
   void initState() {
@@ -57,6 +59,7 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
         ).timeout(const Duration(seconds: 8));
         _center = LatLng(pos.latitude, pos.longitude);
         _usingDemoLocation = false;
+        if (_mapReady) _mapController.move(_center, 13);
       }
     } catch (_) {
       // Tetap pakai lokasi demo.
@@ -135,9 +138,14 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
             SizedBox(
               height: 220,
               child: FlutterMap(
+                mapController: _mapController,
                 options: MapOptions(
                   initialCenter: _center,
                   initialZoom: 13,
+                  onMapReady: () {
+                    _mapReady = true;
+                    _mapController.move(_center, 13);
+                  },
                 ),
                 children: [
                   TileLayer(

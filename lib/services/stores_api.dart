@@ -8,35 +8,41 @@ import 'package:worthbang/models/store_models.dart';
 
 final storesApiProvider = Provider<StoresApi>((ref) => StoresApi());
 
-/// Toko terdekat — sekarang 100% lokal dari assets/data/stores_jakarta.csv.
-/// Tidak butuh backend maupun jaringan.
+/// Toko terdekat — data lokal Jakarta dan Yogyakarta, tanpa backend/jaringan.
 class StoresApi {
   List<_CsvStore>? _cache;
 
   Future<List<_CsvStore>> _load() async {
     final cached = _cache;
     if (cached != null) return cached;
-    final raw = await rootBundle.loadString(
-      'assets/data/stores_jakarta.csv',
-    );
-    final rows = _parseCsv(raw);
     final out = <_CsvStore>[];
-    for (var i = 1; i < rows.length; i++) {
-      final r = rows[i];
-      if (r.length < 6) continue;
-      Map<String, int> prices = {};
-      try {
-        final pj = jsonDecode(r[5]) as Map<String, dynamic>;
-        prices = pj.map((k, v) => MapEntry(k, (v as num).toInt()));
-      } catch (_) {}
-      out.add(_CsvStore(
-        id: i,
-        name: r[0],
-        address: r[1],
-        lat: double.tryParse(r[3]) ?? 0,
-        lng: double.tryParse(r[4]) ?? 0,
-        prices: prices,
-      ));
+    const dataFiles = [
+      'assets/data/stores_jakarta.csv',
+      'backend/app/data/stores_yogyakarta.csv',
+    ];
+    for (final dataFile in dataFiles) {
+      final raw = await rootBundle.loadString(dataFile);
+      final rows = _parseCsv(raw);
+      for (var i = 1; i < rows.length; i++) {
+        final r = rows[i];
+        if (r.length < 6) continue;
+        final lat = double.tryParse(r[3]);
+        final lng = double.tryParse(r[4]);
+        if (lat == null || lng == null) continue;
+        Map<String, int> prices = {};
+        try {
+          final pj = jsonDecode(r[5]) as Map<String, dynamic>;
+          prices = pj.map((k, v) => MapEntry(k, (v as num).toInt()));
+        } catch (_) {}
+        out.add(_CsvStore(
+          id: out.length + 1,
+          name: r[0],
+          address: r[1],
+          lat: lat,
+          lng: lng,
+          prices: prices,
+        ));
+      }
     }
     _cache = out;
     return out;
