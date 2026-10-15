@@ -1,10 +1,11 @@
+import 'dart:math';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:worthbang/services/shake_detector.dart';
 import 'package:worthbang/services/builder_api.dart';
 import 'package:worthbang/models/builder_models.dart';
+import 'package:worthbang/services/shake_detector.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,22 +30,24 @@ void main() {
 
   group('BuilderApi', () {
     test(
-      'randomBuild can be generated repeatedly from bundled catalog',
+      'randomBuild varies on each generation and stays within budget',
       () async {
-        final api = BuilderApi();
+        final api = BuilderApi(random: Random(42));
         for (final useCase in ['gaming', 'office', 'editing']) {
-          final first = await api.randomBuild(
-            budget: 10000000,
-            useCase: useCase,
-          );
-          final second = await api.randomBuild(
-            budget: 10000000,
-            useCase: useCase,
-          );
-          expect(first.parts, hasLength(5));
-          expect(second.parts, hasLength(5));
-          expect(first.budget, 10000000);
-          expect(second.budget, 10000000);
+          RandomBuild? previous;
+          for (var i = 0; i < 10; i++) {
+            final build = await api.randomBuild(
+              budget: 10000000,
+              useCase: useCase,
+            );
+            expect(build.parts, hasLength(5));
+            expect(build.budget, 10000000);
+            expect(build.total, lessThanOrEqualTo(build.budget));
+            if (previous != null) {
+              expect(_signature(build), isNot(_signature(previous)));
+            }
+            previous = build;
+          }
         }
       },
     );
@@ -101,3 +104,11 @@ void main() {
     });
   });
 }
+
+String _signature(RandomBuild build) => [
+  build.cpu,
+  build.gpu,
+  build.ram,
+  build.ssd,
+  build.psu,
+].map((part) => '${part.name}:${part.price}').join('|');

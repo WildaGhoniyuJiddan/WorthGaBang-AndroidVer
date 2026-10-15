@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/models/builder_models.dart';
@@ -9,6 +11,11 @@ final builderApiProvider = Provider<BuilderApi>((ref) => BuilderApi());
 /// Random builder — sekarang 100% lokal dari katalog bundled.
 /// Logika di-port 1:1 dari backend (alokasi per use-case + PSU estimasi).
 class BuilderApi {
+  BuilderApi({Random? random}) : _random = random ?? Random();
+
+  final Random _random;
+  RandomBuild? _lastBuild;
+
   Future<RandomBuild> randomBuild({
     required int budget,
     required String useCase,
@@ -28,7 +35,8 @@ class BuilderApi {
           items.where((e) => e.price <= budgetShare).toList();
       final pool = affordable.isEmpty ? items : affordable;
       pool.sort((a, b) => b.price.compareTo(a.price));
-      return pool.first;
+      final candidates = pool.take(5).toList();
+      return _pickDifferent(candidates, _previousPart(section));
     }
 
     final cpu = pick('cpu', alloc['cpu']!);
@@ -46,13 +54,13 @@ class BuilderApi {
             (b.price - psuBudget).abs(),
           ),
     );
-    final psu = psuPool.first;
+    final psu = _pickDifferent(psuPool, _lastBuild?.psu);
 
     BuildComponent part(CatalogItem e) =>
         BuildComponent(name: e.model, price: e.price);
 
     final total = cpu.price + gpu.price + ram.price + ssd.price + psu.price;
-    return RandomBuild(
+    final build = RandomBuild(
       cpu: part(cpu),
       gpu: part(gpu),
       ram: part(ram),
@@ -61,6 +69,34 @@ class BuilderApi {
       total: total,
       budget: budget,
     );
+    _lastBuild = build;
+    return build;
+  }
+
+  BuildComponent? _previousPart(String section) {
+    final previous = _lastBuild;
+    if (previous == null) return null;
+    return switch (section) {
+      'cpu' => previous.cpu,
+      'gpu' => previous.gpu,
+      'ram' => previous.ram,
+      'storage' => previous.ssd,
+      _ => null,
+    };
+  }
+
+  CatalogItem _pickDifferent(
+    List<CatalogItem> candidates,
+    BuildComponent? previous,
+  ) {
+    final alternatives = previous == null
+        ? candidates
+        : candidates
+            .where((item) =>
+                item.model != previous.name || item.price != previous.price)
+            .toList();
+    final pool = alternatives.isEmpty ? candidates : alternatives;
+    return pool[_random.nextInt(pool.length)];
   }
 }
 
