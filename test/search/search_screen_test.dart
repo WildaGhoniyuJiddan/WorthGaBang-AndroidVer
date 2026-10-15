@@ -9,52 +9,32 @@ import 'package:worthbang/services/api_exception.dart';
 import 'package:worthbang/services/price_check_api.dart';
 
 class _MockPriceCheckApi extends PriceCheckApi {
-  _MockPriceCheckApi({this.onAnalyze}) : super(_DummyApiClient());
+  _MockPriceCheckApi({this.onSearch}) : super(_DummyApiClient());
 
-  final Future<AnalysisResult> Function({
+  final Future<List<PriceComparison>> Function({
     required String mode,
     required String query,
-    required int price,
-    String? componentType,
-    String condition,
-  })? onAnalyze;
+  })? onSearch;
 
   @override
-  Future<AnalysisResult> analyze({
+  Future<List<PriceComparison>> search({
     required String mode,
     required String query,
-    required int price,
     String? componentType,
     String condition = 'any',
   }) async {
-    if (onAnalyze != null) {
-      return onAnalyze!(
-        mode: mode,
-        query: query,
-        price: price,
-        componentType: componentType,
-        condition: condition,
-      );
+    if (onSearch != null) {
+      return onSearch!(mode: mode, query: query);
     }
-    return AnalysisResult.fromJson({
-      'mode': mode,
-      'query': query,
-      'input_price': price,
-      'score': 85.0,
-      'verdict': 'worth it',
-      'recommendation': 'Bagus.',
-      'reference_price': 4000000,
-      'price_delta_percent': 0.0,
-      'comparisons': [
-        {
-          'title': 'Test Item $query',
-          'price': 3500000,
-          'source': 'tokopedia',
-          'similarity': 0.9,
-          'condition': 'baru',
-        },
-      ],
-    });
+    return [
+      PriceComparison(
+        title: 'Test Item $query',
+        price: 3500000,
+        source: 'tokopedia',
+        similarity: 0.9,
+        condition: 'baru',
+      ),
+    ];
   }
 }
 
@@ -75,41 +55,26 @@ class _DummyApiClient implements ApiClient {
 
 void main() {
   group('SearchFilterScreen widget tests', () {
-    testWidgets('Cari produk tanpa harga memanggil API dengan price 0 tanpa error', (tester) async {
+    testWidgets('Cari produk memakai endpoint pencarian langsung', (tester) async {
       String? capturedMode;
       String? capturedQuery;
-      int? capturedPrice;
 
       final mockApi = _MockPriceCheckApi(
-        onAnalyze: ({
+        onSearch: ({
           required mode,
           required query,
-          required price,
-          componentType,
-          condition = 'any',
         }) async {
           capturedMode = mode;
           capturedQuery = query;
-          capturedPrice = price;
-          return AnalysisResult.fromJson({
-            'mode': mode,
-            'query': query,
-            'input_price': price,
-            'score': 90.0,
-            'verdict': 'worth it',
-            'recommendation': 'Ok',
-            'reference_price': 4000000,
-            'price_delta_percent': 0.0,
-            'comparisons': [
-              {
-                'title': 'GeForce RTX 3060 12GB',
-                'price': 4200000,
-                'source': 'tokopedia',
-                'similarity': 0.95,
-                'condition': 'baru',
-              },
-            ],
-          });
+          return [
+            const PriceComparison(
+              title: 'GeForce RTX 3060 12GB',
+              price: 4200000,
+              source: 'tokopedia',
+              similarity: 0.95,
+              condition: 'new',
+            ),
+          ];
         },
       );
 
@@ -135,49 +100,33 @@ void main() {
 
       expect(capturedMode, 'pc');
       expect(capturedQuery, 'RTX 3060');
-      expect(capturedPrice, 0);
 
       // Memastikan hasil listing tampil di layar
       expect(find.text('GeForce RTX 3060 12GB'), findsOneWidget);
       expect(find.text('tokopedia • baru'), findsOneWidget);
       expect(find.textContaining('ApiException'), findsNothing);
+      await tester.tap(find.widgetWithText(FilterChip, 'Baru'));
+      await tester.pumpAndSettle();
+      expect(find.text('GeForce RTX 3060 12GB'), findsOneWidget);
     });
 
-    testWidgets('Jika price 0 menghasilkan 422, otomatis fallback ke price 1', (tester) async {
+    testWidgets('Pencarian tidak memanggil endpoint analisis harga', (tester) async {
       int callCount = 0;
-      final pricesSent = <int>[];
 
       final mockApi = _MockPriceCheckApi(
-        onAnalyze: ({
+        onSearch: ({
           required mode,
           required query,
-          required price,
-          componentType,
-          condition = 'any',
         }) async {
           callCount++;
-          pricesSent.add(price);
-          if (price == 0) {
-            throw const ApiException('Input should be greater than 0', 422);
-          }
-          return AnalysisResult.fromJson({
-            'mode': mode,
-            'query': query,
-            'input_price': price,
-            'score': 80.0,
-            'verdict': 'worth it',
-            'recommendation': 'Ok',
-            'reference_price': 3000000,
-            'price_delta_percent': 0.0,
-            'comparisons': [
-              {
-                'title': 'Fallback Result',
-                'price': 3000000,
-                'source': 'tokopedia',
-                'similarity': 0.9,
-              },
-            ],
-          });
+          return [
+            const PriceComparison(
+              title: 'Fallback Result',
+              price: 3000000,
+              source: 'tokopedia',
+              similarity: 0.9,
+            ),
+          ];
         },
       );
 
@@ -197,20 +146,15 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Cari'));
       await tester.pumpAndSettle();
 
-      expect(callCount, 2);
-      expect(pricesSent, [0, 1]);
+      expect(callCount, 1);
       expect(find.text('Fallback Result'), findsOneWidget);
-      expect(find.textContaining('ApiException'), findsNothing);
     });
 
     testWidgets('Menampilkan pesan error yang ramah jika terjadi kegagalan jaringan', (tester) async {
       final mockApi = _MockPriceCheckApi(
-        onAnalyze: ({
+        onSearch: ({
           required mode,
           required query,
-          required price,
-          componentType,
-          condition = 'any',
         }) async {
           throw const ApiException('Tidak dapat terhubung ke server.', 503);
         },
@@ -240,25 +184,12 @@ void main() {
       String? capturedMode;
 
       final mockApi = _MockPriceCheckApi(
-        onAnalyze: ({
+        onSearch: ({
           required mode,
           required query,
-          required price,
-          componentType,
-          condition = 'any',
         }) async {
           capturedMode = mode;
-          return AnalysisResult.fromJson({
-            'mode': mode,
-            'query': query,
-            'input_price': price,
-            'score': 80.0,
-            'verdict': 'worth it',
-            'recommendation': 'Ok',
-            'reference_price': 10000000,
-            'price_delta_percent': 0.0,
-            'comparisons': [],
-          });
+          return [];
         },
       );
 

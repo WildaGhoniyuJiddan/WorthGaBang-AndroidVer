@@ -54,6 +54,17 @@
 ```
 For `mode: "pc"`, `comparisons` also includes matching new products from the bundled retail catalog (`source: "komponen_retail"`, `condition: "new"`, and `listing_url: null`). These catalog products remain available when marketplace listings have not been ingested yet; they are not marketplace listings.
 
+### POST /api/v1/search (Public)
+Search listings without price scoring or benchmark recommendations. This is the endpoint used by the Cari Produk screen.
+```jsonc
+// request
+{ "mode": "pc", "query": "RTX 4060", "condition": "any" }
+// response
+{ "query": "RTX 4060", "comparisons": [ { "title": "...", "price": 4550000,
+  "source": "komponen_retail", "listing_url": null, "similarity": 0.92,
+  "condition": "new" } ] }
+```
+
 ### POST /api/v1/analyze-bundle (Public)
 ```jsonc
 // request

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db import Base
 from app.models import RawListing
 from app.schemas import AnalyzeRequest
-from app.services.analysis import analyze
+from app.services.analysis import analyze, search_comparisons
 
 
 def test_pc_analysis_includes_retail_catalog_without_marketplace_data():
@@ -62,3 +62,23 @@ def test_pc_analysis_keeps_marketplace_results_with_retail_catalog():
     sources = {item.source for item in comparisons}
     assert "tokopedia" in sources
     assert "komponen_retail" in sources
+
+
+def test_search_comparisons_returns_catalog_results_without_price_analysis():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    request = AnalyzeRequest(
+        mode="pc",
+        query="RTX 4060",
+        component_type="gpu",
+        condition="any",
+    )
+
+    try:
+        with Session(engine) as session:
+            results = search_comparisons(session, request)
+    finally:
+        engine.dispose()
+
+    assert results
+    assert all(item.source == "komponen_retail" for item in results)

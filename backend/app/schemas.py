@@ -122,6 +122,11 @@ class AnalyzeResponse(BaseModel):
     freshness: Freshness
 
 
+class SearchResponse(BaseModel):
+    query: str
+    comparisons: list[Comparison]
+
+
 class PCComponentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

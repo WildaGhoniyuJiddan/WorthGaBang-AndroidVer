@@ -23,19 +23,23 @@ class SearchFilter {
     Set<String>? sources,
     int? Function()? maxPrice,
     SortOption? sort,
-  }) =>
-      SearchFilter(
-        conditions: conditions ?? this.conditions,
-        sources: sources ?? this.sources,
-        maxPrice: maxPrice != null ? maxPrice() : this.maxPrice,
-        sort: sort ?? this.sort,
-      );
+  }) => SearchFilter(
+    conditions: conditions ?? this.conditions,
+    sources: sources ?? this.sources,
+    maxPrice: maxPrice != null ? maxPrice() : this.maxPrice,
+    sort: sort ?? this.sort,
+  );
 
   /// Terapkan filter + sort ke daftar pembanding.
   List<PriceComparison> apply(List<PriceComparison> input) {
     var out = input.where((c) {
+      final condition = switch (c.condition) {
+        'new' => 'baru',
+        'second' => 'bekas',
+        _ => c.condition,
+      };
       if (conditions.isNotEmpty &&
-          (c.condition == null || !conditions.contains(c.condition))) {
+          (condition == null || !conditions.contains(condition))) {
         return false;
       }
       if (sources.isNotEmpty && !sources.contains(c.source)) return false;
@@ -48,8 +52,7 @@ class SearchFilter {
       case SortOption.priceDesc:
         out.sort((a, b) => b.price.compareTo(a.price));
       case SortOption.similarity:
-        out.sort((a, b) =>
-            (b.similarity ?? 0).compareTo(a.similarity ?? 0));
+        out.sort((a, b) => (b.similarity ?? 0).compareTo(a.similarity ?? 0));
     }
     return out;
   }

@@ -195,9 +195,12 @@ class DioApiClient implements ApiClient {
       message = data;
     } else if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
-      message = 'Koneksi timeout. Periksa internet Anda.';
+      message =
+          'Koneksi ke server timeout. Pastikan backend aktif dan alamat API benar. '
+          'Jika memakai HP fisik, gunakan IP LAN komputer.';
     } else if (e.type == DioExceptionType.connectionError) {
-      message = 'Tidak dapat terhubung ke server.';
+      message =
+          'Tidak dapat terhubung ke server. Pastikan backend aktif dan alamat API benar.';
     }
     return ApiException(message, status);
   }

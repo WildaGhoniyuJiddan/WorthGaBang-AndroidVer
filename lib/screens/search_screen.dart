@@ -14,23 +14,20 @@ class SearchFilterScreen extends ConsumerStatefulWidget {
   const SearchFilterScreen({super.key});
 
   @override
-  ConsumerState<SearchFilterScreen> createState() =>
-      _SearchFilterScreenState();
+  ConsumerState<SearchFilterScreen> createState() => _SearchFilterScreenState();
 }
 
 class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
   final _query = TextEditingController();
-  final _price = TextEditingController();
   final _maxPrice = TextEditingController();
 
   String _mode = 'pc';
-  ApiResult<AnalysisResult>? _state;
+  ApiResult<List<PriceComparison>>? _state;
   SearchFilter _filter = const SearchFilter();
 
   @override
   void dispose() {
     _query.dispose();
-    _price.dispose();
     _maxPrice.dispose();
     super.dispose();
   }
@@ -38,40 +35,21 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
   Future<void> _search() async {
     final queryText = _query.text.trim();
     if (queryText.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.queryMin)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text(AppStrings.queryMin)));
       return;
     }
     FocusScope.of(context).unfocus();
     setState(() => _state = const ApiLoading());
     try {
-      final parsedPrice = int.tryParse(
-        _price.text.replaceAll(RegExp(r'[^0-9]'), ''),
-      );
-      final price = (parsedPrice != null && parsedPrice > 0) ? parsedPrice : 0;
-      AnalysisResult result;
-      try {
-        result = await ref.read(priceCheckApiProvider).analyze(
-              mode: _mode,
-              query: queryText,
-              price: price,
-            );
-      } on ApiException catch (apiErr) {
-        // Fallback jika instance backend masih memberlakukan validasi price > 0 (422)
-        if (price == 0 && apiErr.statusCode == 422) {
-          result = await ref.read(priceCheckApiProvider).analyze(
-                mode: _mode,
-                query: queryText,
-                price: 1,
-              );
-        } else {
-          rethrow;
-        }
-      }
-      setState(() => _state = ApiSuccess(result));
+      final comparisons = await ref
+          .read(priceCheckApiProvider)
+          .search(mode: _mode, query: queryText);
+      if (!mounted) return;
+      setState(() => _state = ApiSuccess(comparisons));
     } catch (e) {
       final message = e is ApiException ? e.message : e.toString();
+      if (!mounted) return;
       setState(() => _state = ApiError(message));
     }
   }
@@ -79,11 +57,14 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
   @override
   Widget build(BuildContext context) {
     final state = _state;
-    final result = state is ApiSuccess<AnalysisResult> ? state.data : null;
-    final filtered =
-        result != null ? _filter.apply(result.comparisons) : const <PriceComparison>[];
-    final sources =
-        result?.comparisons.map((c) => c.source).toSet().toList() ?? [];
+    final queryText = _query.text.trim();
+    final comparisons = state is ApiSuccess<List<PriceComparison>>
+        ? state.data
+        : null;
+    final filtered = comparisons != null
+        ? _filter.apply(comparisons)
+        : const <PriceComparison>[];
+    final sources = comparisons?.map((c) => c.source).toSet().toList() ?? [];
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.searchScreenTitle)),
@@ -111,27 +92,12 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
             Row(
               children: [
                 Expanded(
-                  flex: 3,
                   child: TextField(
                     controller: _query,
                     textInputAction: TextInputAction.search,
                     decoration: const InputDecoration(
                       labelText: AppStrings.queryLabel,
                       prefixIcon: Icon(Icons.search),
-                    ),
-                    onSubmitted: (_) => _search(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    controller: _price,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.search,
-                    decoration: const InputDecoration(
-                      labelText: AppStrings.searchPriceOptionalLabel,
-                      prefixText: 'Rp ',
                     ),
                     onSubmitted: (_) => _search(),
                   ),
@@ -152,15 +118,14 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
-                  (state as ApiError<AnalysisResult>).message,
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.error),
+                  (state as ApiError<List<PriceComparison>>).message,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
-            if (result != null) ...[
+            if (comparisons != null) ...[
               const SizedBox(height: 16),
               Text(
-                '${result.query} — ${filtered.length} dari ${result.comparisons.length} listing',
+                '$queryText — ${filtered.length} dari ${comparisons.length} listing',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
@@ -211,9 +176,11 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
                       ),
                       onChanged: (v) => setState(() {
                         final n = int.tryParse(
-                            v.replaceAll(RegExp(r'[^0-9]'), ''));
+                          v.replaceAll(RegExp(r'[^0-9]'), ''),
+                        );
                         _filter = _filter.copyWith(
-                            maxPrice: () => n == null || n <= 0 ? null : n);
+                          maxPrice: () => n == null || n <= 0 ? null : n,
+                        );
                       }),
                     ),
                   ),
@@ -239,8 +206,8 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
                           child: Text('Paling mirip'),
                         ),
                       ],
-                      onChanged: (v) => setState(
-                          () => _filter = _filter.copyWith(sort: v)),
+                      onChanged: (v) =>
+                          setState(() => _filter = _filter.copyWith(sort: v)),
                     ),
                   ),
                 ],
@@ -249,22 +216,28 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
               for (final c in filtered)
                 Card(
                   child: ListTile(
-                    title: Text(c.title,
-                        maxLines: 2, overflow: TextOverflow.ellipsis),
+                    title: Text(
+                      c.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     subtitle: Text(
-                        '${c.source}${c.condition != null ? ' • ${c.condition}' : ''}'),
+                      '${c.source}${switch (c.condition) {
+                        'new' => ' • baru',
+                        'second' => ' • bekas',
+                        final condition => condition == null ? '' : ' • $condition',
+                      }}',
+                    ),
                     trailing: Text(
                       formatRupiah(c.price),
-                      style:
-                          const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
               if (filtered.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                      child: Text(AppStrings.searchEmpty)),
+                  child: Center(child: Text(AppStrings.searchEmpty)),
                 ),
             ],
           ],

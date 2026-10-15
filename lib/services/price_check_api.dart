@@ -2,7 +2,7 @@ import 'package:worthbang/services/api_client.dart';
 import 'package:worthbang/models/bundle_models.dart';
 import 'package:worthbang/models/price_check_models.dart';
 
-/// Akses endpoint price check (existing backend, tanpa perubahan).
+/// Akses endpoint pencarian dan price check backend.
 class PriceCheckApi {
   PriceCheckApi(this._client);
 
@@ -27,6 +27,28 @@ class PriceCheckApi {
       },
     );
     return AnalysisResult.fromJson(json);
+  }
+
+  /// POST /api/v1/search — pencarian listing tanpa analisis benchmark.
+  Future<List<PriceComparison>> search({
+    required String mode,
+    required String query,
+    String? componentType,
+    String condition = 'any',
+  }) async {
+    final json = await _client.postJson(
+      '/api/v1/search',
+      body: {
+        'mode': mode,
+        'query': query,
+        'component_type': componentType,
+        'condition': condition,
+      },
+    );
+    return (json['comparisons'] as List? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(PriceComparison.fromJson)
+        .toList();
   }
 
   /// POST /api/v1/analyze-bundle — analisis paket 1–6 komponen.
@@ -59,10 +81,13 @@ class PriceCheckApi {
     );
     final raw = json['suggestions'] as List? ?? const [];
     // Backend bisa mengembalikan list string atau list objek {name,...}.
-    return raw.map((e) {
-      if (e is String) return e;
-      if (e is Map) return (e['name'] ?? e['title'] ?? '').toString();
-      return e.toString();
-    }).where((s) => s.isNotEmpty).toList();
+    return raw
+        .map((e) {
+          if (e is String) return e;
+          if (e is Map) return (e['name'] ?? e['title'] ?? '').toString();
+          return e.toString();
+        })
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 }

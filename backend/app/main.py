@@ -24,8 +24,9 @@ from .schemas import (
     BundleItemBreakdown,
     BundleRequest,
     BundleResponse,
+    SearchResponse,
 )
-from .services.analysis import analyze, resolve_bundle_item_prices
+from .services.analysis import analyze, resolve_bundle_item_prices, search_comparisons
 from .services.scoring import score_price
 from .services.suggest import suggest_components
 from .routers.mobile import router as mobile_router
@@ -99,6 +100,15 @@ def analyze_price(
         comparisons=comparisons,
         alternatives=[Alternative(**alt) for alt in alternatives],
         freshness=freshness,
+    )
+
+
+@app.post("/api/v1/search", response_model=SearchResponse)
+def search_products(payload: AnalyzeRequest, db: Session = Depends(get_db)) -> SearchResponse:
+    """Cari listing tanpa kalkulasi harga, benchmark, atau pencatatan analisis."""
+    return SearchResponse(
+        query=payload.query,
+        comparisons=search_comparisons(db, payload),
     )
 
 
@@ -213,5 +223,4 @@ def debug_env():
     # Also check if DATABASE_URL is set (but don't show the value)
     result['DATABASE_URL_SET'] = 'set' if os.getenv('DATABASE_URL') else 'not set'
     return result
-
 

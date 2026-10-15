@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Iterable
 
 from sqlalchemy import desc, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from ..config import get_settings
 from ..models import LaptopUnit, RawListing, ScrapeRun
@@ -365,9 +365,20 @@ def _pc_comparisons(session: Session, request: AnalyzeRequest) -> list[Compariso
     m_num = re.search(r"\b(\d{3,5})\b", request.query)
     model_num = m_num.group(1) if m_num else None
 
-    # Bangun filter SQL yang efisien melintasi seluruh database
-    all_cats = ("pc", "vga", "processor", "motherboard", "ram", "ssd", "harddisk", "laptop")
+    # Restrict the indexed category scan to the requested component and mixed PC rows.
+    all_cats = ("pc", *retail_cats) if ctype else (
+        "pc", "vga", "processor", "motherboard", "ram", "ssd", "harddisk",
+    )
     all_sources = ("komponen_retail", "tokopedia", "facebook", "facebook_marketplace")
+    listing_columns = load_only(
+        RawListing.id,
+        RawListing.source,
+        RawListing.raw_title,
+        RawListing.raw_price,
+        RawListing.listing_url,
+        RawListing.condition,
+        RawListing.scraped_at,
+    )
 
     base_query = select(RawListing).where(
         RawListing.raw_price >= 50_000,
@@ -391,7 +402,11 @@ def _pc_comparisons(session: Session, request: AnalyzeRequest) -> list[Compariso
             for t in toks:
                 base_query = base_query.where(RawListing.raw_title.ilike(f"%{t}%"))
 
-    rows = session.scalars(base_query.order_by(desc(RawListing.scraped_at)).limit(3000)).all()
+    rows = session.scalars(
+        base_query.options(listing_columns)
+        .order_by(desc(RawListing.scraped_at))
+        .limit(3000)
+    ).all()
 
     # Jika pencarian targeted sedikit atau tidak ada token angka, fallback ke limit 1000 per sumber
     if len(rows) < 10 and not model_num:
@@ -402,7 +417,7 @@ def _pc_comparisons(session: Session, request: AnalyzeRequest) -> list[Compariso
             (("facebook", "facebook_marketplace"), ("pc",)),
         ):
             fallback_rows += session.scalars(
-                select(RawListing).where(
+                select(RawListing).options(listing_columns).where(
                     RawListing.category.in_(cats),
                     RawListing.raw_price >= 50_000,
                     RawListing.raw_price <= 150_000_000,
@@ -591,6 +606,14 @@ def _retail_comparisons(
         )
         for similarity, price, title in candidates[:12]
     ]
+
+
+def search_comparisons(session: Session, request: AnalyzeRequest) -> list[Comparison]:
+    """Return matching listings without running price scoring or benchmark analysis."""
+    if request.mode == "pc":
+        return _pc_comparisons(session, request)
+    comparisons, _ = _laptop_comparisons(session, request)
+    return comparisons
 
 
 def resolve_bundle_item_prices(session: Session, query: str, component_type: str | None = None) -> tuple[int, int | None, int | None]:

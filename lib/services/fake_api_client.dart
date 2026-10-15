@@ -348,6 +348,28 @@ class FakeApiClient implements ApiClient {
             'primary_source': 'tokopedia',
           },
         };
+      case '/api/v1/search':
+        return {
+          'query': body?['query'] ?? '',
+          'comparisons': [
+            {
+              'title': 'RTX 4060 8GB Dual Fan',
+              'price': 4550000,
+              'source': 'komponen_retail',
+              'listing_url': null,
+              'similarity': 0.92,
+              'condition': 'new',
+            },
+            {
+              'title': 'RTX 4060 8GB Bekas Mulus',
+              'price': 3900000,
+              'source': 'tokopedia',
+              'listing_url': 'https://example.com/2',
+              'similarity': 0.88,
+              'condition': 'second',
+            },
+          ],
+        };
       case '/api/v1/analyze-bundle':
         final items = (body?['items'] as List? ?? const [])
             .whereType<Map<String, dynamic>>()
