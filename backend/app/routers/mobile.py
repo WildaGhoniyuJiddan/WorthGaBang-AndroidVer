@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
@@ -104,10 +104,10 @@ def refresh(payload: RefreshRequest, db: Session = Depends(get_db)) -> TokenResp
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-@router.post("/auth/logout", status_code=204)
-def logout(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> None:
+@router.post("/auth/logout", status_code=204, response_class=Response)
+def logout(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Response:
     revoke_all_user_tokens(db, user.id)
-    return None
+    return Response(status_code=204)
 
 
 # ---------------------------------------------------------------------------
