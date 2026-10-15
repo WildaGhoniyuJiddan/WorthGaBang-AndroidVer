@@ -52,6 +52,7 @@
   "freshness": { "last_updated_at": "...", "age_seconds": 3600,
                  "label": "1 jam lalu", "is_stale": false, "primary_source": "tokopedia" } }
 ```
+For `mode: "pc"`, `comparisons` also includes matching new products from the bundled retail catalog (`source: "komponen_retail"`, `condition: "new"`, and `listing_url: null`). These catalog products remain available when marketplace listings have not been ingested yet; they are not marketplace listings.
 
 ### POST /api/v1/analyze-bundle (Public)
 ```jsonc

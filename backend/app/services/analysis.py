@@ -492,8 +492,9 @@ def _pc_comparisons(session: Session, request: AnalyzeRequest) -> list[Compariso
         needed = 10 - len(pool)
         pool += other_cond[:needed]
 
+    retail_comparisons = _retail_comparisons(request.query, ctype, request.condition)
     if not pool:
-        return []
+        return retail_comparisons
 
     # Urutkan berdasarkan kemiripan tertinggi dan kedekatan dengan median
     prices = sorted(item[1].raw_price or 0 for item in pool)
@@ -536,6 +537,59 @@ def _pc_comparisons(session: Session, request: AnalyzeRequest) -> list[Compariso
             condition=row.condition or "new",
         )
         for similarity, row, _ in selected
+    ] + retail_comparisons
+
+
+def _retail_comparisons(
+    query: str,
+    component_type: str | None,
+    condition: str | None,
+) -> list[Comparison]:
+    """Use the bundled retail catalog as searchable new-product comparisons."""
+    if condition in ("second", "bekas") or component_type == "laptop":
+        return []
+
+    catalog = _load_retail_catalog()
+    sections = {
+        "gpu": ("gpu",),
+        "cpu": ("cpu",),
+        "motherboard": ("motherboard",),
+        "ram": ("ram",),
+        "storage": ("storage",),
+    }.get(component_type, ("gpu", "cpu", "motherboard", "ram", "storage"))
+
+    required = _model_tokens(query, component_type)
+    candidates: list[tuple[float, int, str]] = []
+    for section in sections:
+        for product in catalog.get(section) or []:
+            title = str(product.get("model") or "").strip()
+            price = product.get("price")
+            if not title or not isinstance(price, int) or price < 50_000:
+                continue
+            if not _is_relevant_pc_listing(query, title, component_type):
+                continue
+
+            similarity = _similarity(query, title)
+            if similarity < 0.75:
+                continue
+            if not _matches_model_tokens(
+                _model_tokens(title, component_type),
+                required,
+            ):
+                continue
+            candidates.append((similarity, price, title))
+
+    candidates.sort(key=lambda item: (item[0], -item[1]), reverse=True)
+    return [
+        Comparison(
+            title=title,
+            price=price,
+            source="komponen_retail",
+            listing_url=None,
+            similarity=similarity,
+            condition="new",
+        )
+        for similarity, price, title in candidates[:12]
     ]
 
 
