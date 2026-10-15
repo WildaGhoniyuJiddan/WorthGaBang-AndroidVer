@@ -1,7 +1,20 @@
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/services/currency_api.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('format tanggal Indonesia tersedia untuk layar konverter', () async {
+    await initializeDateFormatting('id_ID');
+    final formatted = DateFormat(
+      'd MMM yyyy HH:mm',
+      'id_ID',
+    ).format(DateTime(2026, 10, 15, 13, 50));
+    expect(formatted, contains('Okt'));
+  });
+
   group('CurrencyRates.fromJson (kontrak B9)', () {
     test('parse rates', () {
       final r = CurrencyRates.fromJson({

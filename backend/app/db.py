@@ -2,6 +2,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from .config import get_settings
@@ -31,8 +32,14 @@ if database_url.startswith("postgresql://"):
     database_url = "postgresql+psycopg://" + database_url[len("postgresql://"):]
 if database_url.startswith("sqlite:///./"):
     database_path = Path(__file__).resolve().parents[1] / database_url.removeprefix("sqlite:///./")
-    database_path.parent.mkdir(parents=True, exist_ok=True)
     database_url = f"sqlite:///{database_path.as_posix()}"
+if database_url.startswith("sqlite"):
+    sqlite_path = make_url(database_url).database
+    if sqlite_path and sqlite_path != ":memory:":
+        Path(sqlite_path).expanduser().resolve().parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
 engine = create_engine(database_url, future=True, **_engine_kwargs(database_url))
 

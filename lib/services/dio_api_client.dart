@@ -9,6 +9,12 @@ import 'api_exception.dart';
 /// Base URL backend saat development (emulator Android → host loopback).
 const String devBaseUrl = 'http://10.0.2.2:8000';
 
+/// Bisa diarahkan ke backend pada komputer host saat dites dari HP fisik.
+const String apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: devBaseUrl,
+);
+
 /// [ApiClient] produksi di atas Dio.
 ///
 /// - Menyematkan `Authorization: Bearer <access_token>` di tiap request
@@ -20,7 +26,7 @@ const String devBaseUrl = 'http://10.0.2.2:8000';
 class DioApiClient implements ApiClient {
   DioApiClient({
     required this._tokenStorage,
-    String baseUrl = devBaseUrl,
+    String baseUrl = apiBaseUrl,
     Dio? dio,
   })  : _dio = dio ??
             Dio(BaseOptions(

@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:worthbang/services/shake_detector.dart';
+import 'package:worthbang/services/builder_api.dart';
 import 'package:worthbang/models/builder_models.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('RandomBuild.fromJson (kontrak B6)', () {
     test('parse response lengkap', () {
       final b = RandomBuild.fromJson({
@@ -22,6 +25,29 @@ void main() {
       expect(b.total, 8590000);
       expect(b.total <= b.budget, isTrue);
     });
+  });
+
+  group('BuilderApi', () {
+    test(
+      'randomBuild can be generated repeatedly from bundled catalog',
+      () async {
+        final api = BuilderApi();
+        for (final useCase in ['gaming', 'office', 'editing']) {
+          final first = await api.randomBuild(
+            budget: 10000000,
+            useCase: useCase,
+          );
+          final second = await api.randomBuild(
+            budget: 10000000,
+            useCase: useCase,
+          );
+          expect(first.parts, hasLength(5));
+          expect(second.parts, hasLength(5));
+          expect(first.budget, 10000000);
+          expect(second.budget, 10000000);
+        }
+      },
+    );
   });
 
   group('ShakeDetector', () {

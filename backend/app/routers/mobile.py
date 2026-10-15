@@ -5,6 +5,7 @@ Additive only: existing endpoints in main.py are untouched.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from pathlib import Path
 
@@ -278,6 +279,7 @@ _REFUSAL_REPLY = (
     "komponen aja ya!"
 )
 
+_logger = logging.getLogger(__name__)
 
 # "harganya" -> "harga": imbuhan milik -nya/-ku/-mu dinormalisasi dulu.
 _POSSESSIVE_RE = re.compile(r"(nya|ku|mu)\b", re.IGNORECASE)
@@ -349,10 +351,36 @@ async def _gemini_text(prompt: str, system_instruction: str) -> str:
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(url, json=body)
-    except Exception:
+    except httpx.RequestError as exc:
+        _logger.warning("Gemini request failed: %s", type(exc).__name__)
         raise HTTPException(status_code=503, detail="Chat service unavailable, try again later")
     if resp.status_code != 200:
-        raise HTTPException(status_code=503, detail="Chat service unavailable, try again later")
+        error = {}
+        try:
+            response_data = resp.json()
+            if isinstance(response_data, dict):
+                error = response_data.get("error", {})
+        except (ValueError, AttributeError):
+            pass
+        if not isinstance(error, dict):
+            error = {}
+        upstream_status = error.get("status", "unknown")
+        upstream_message = str(error.get("message", "no error message"))[:300]
+        _logger.warning(
+            "Gemini API returned HTTP %s (%s): %s",
+            resp.status_code,
+            upstream_status,
+            upstream_message,
+        )
+        if resp.status_code in (400, 401, 403):
+            detail = "Gemini menolak konfigurasi. Periksa API key dan akses model."
+        elif resp.status_code == 429:
+            detail = "Kuota atau batas permintaan Gemini tercapai. Coba lagi nanti."
+        elif resp.status_code == 503 and upstream_status == "UNAVAILABLE":
+            detail = "Model Gemini sedang sibuk. Coba kirim pesan lagi beberapa saat."
+        else:
+            detail = "Chat service unavailable, try again later"
+        raise HTTPException(status_code=503, detail=detail)
     try:
         data = resp.json()
         return data["candidates"][0]["content"]["parts"][0]["text"]
@@ -401,5 +429,3 @@ async def chat_ask(payload: ChatRequest) -> ChatResponse:
         except (TypeError, ValueError):
             build = None
     return ChatResponse(reply=str(data.get("reply", ""))[:2000], build=build)
-
-

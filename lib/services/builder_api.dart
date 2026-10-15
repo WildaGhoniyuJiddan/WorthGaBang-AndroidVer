@@ -39,7 +39,8 @@ class BuilderApi {
     final psuBudget = (budget * alloc['psu']!).toInt();
     final psuCands =
         _psuEstimates.where((p) => p.price <= psuBudget).toList();
-    final psuPool = psuCands.isEmpty ? _psuEstimates : psuCands;
+    final psuPool =
+        psuCands.isEmpty ? List<CatalogItem>.of(_psuEstimates) : psuCands;
     psuPool.sort(
       (a, b) => (a.price - psuBudget).abs().compareTo(
             (b.price - psuBudget).abs(),
