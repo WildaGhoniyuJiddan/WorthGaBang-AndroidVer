@@ -51,13 +51,21 @@ class StoresApi {
   Future<List<Store>> nearby({
     required double lat,
     required double lng,
-    double radiusKm = 10,
+    double radiusKm = 25,
+    String? query,
   }) async {
     final stores = await _load();
     final result = <Store>[];
+    final q = query?.trim().toLowerCase();
     for (final s in stores) {
       final d = _haversineKm(lat, lng, s.lat, s.lng);
-      if (d <= radiusKm) {
+      final matchesQuery = q == null ||
+          q.isEmpty ||
+          s.name.toLowerCase().contains(q) ||
+          s.address.toLowerCase().contains(q);
+      // Jika user mencari nama toko tertentu, sertakan walau di luar radius;
+      // jika tidak sedang mencari nama, ambil dalam batas radius.
+      if (matchesQuery && (d <= radiusKm || (q != null && q.isNotEmpty))) {
         result.add(Store(
           id: s.id,
           name: s.name,

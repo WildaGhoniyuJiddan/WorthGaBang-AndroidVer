@@ -7,7 +7,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:worthbang/services/api_result.dart';
-import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/models/store_models.dart';
 import 'package:worthbang/services/stores_api.dart';
@@ -116,7 +115,11 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
     try {
       final stores = await ref
           .read(storesApiProvider)
-          .nearby(lat: _center.latitude, lng: _center.longitude);
+          .nearby(
+            lat: _center.latitude,
+            lng: _center.longitude,
+            query: _query.text.trim(),
+          );
       if (!mounted) return;
       setState(() => _state = ApiSuccess(stores));
     } catch (e) {
@@ -140,20 +143,12 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
   Widget build(BuildContext context) {
     final state = _state;
     final stores = state is ApiSuccess<List<Store>> ? state.data : null;
-    final q = _query.text.trim();
-    final withPrice =
-        (stores ?? [])
-            .map((s) => (store: s, price: q.isEmpty ? null : s.priceFor(q)))
-            .toList()
-          ..sort((a, b) {
-            // Yang punya harga dulu, termurah pertama; tanpa harga urut jarak.
-            if (a.price != null && b.price != null) {
-              return a.price!.compareTo(b.price!);
-            }
-            if (a.price != null) return -1;
-            if (b.price != null) return 1;
-            return a.store.distanceKm.compareTo(b.store.distanceKm);
-          });
+    final q = _query.text.trim().toLowerCase();
+    final filteredStores = (stores ?? []).where((s) {
+      if (q.isEmpty) return true;
+      return s.name.toLowerCase().contains(q) ||
+          s.address.toLowerCase().contains(q);
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.storesTitle)),
@@ -167,12 +162,24 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                   Expanded(
                     child: TextField(
                       controller: _query,
-                      decoration: const InputDecoration(
-                        labelText: AppStrings.queryLabel,
-                        prefixIcon: Icon(Icons.store_outlined),
+                      decoration: InputDecoration(
+                        labelText: AppStrings.searchStoreLabel,
+                        hintText: AppStrings.searchStoreHint,
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _query.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _query.clear();
+                                  setState(() {});
+                                  _load();
+                                },
+                              )
+                            : null,
                         isDense: true,
                       ),
-                      onSubmitted: (_) => setState(() {}),
+                      onChanged: (_) => setState(() {}),
+                      onSubmitted: (_) => _load(),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -240,15 +247,26 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                               size: 32,
                             ),
                           ),
-                          for (final s in stores ?? [])
+                          for (final s in filteredStores)
                             Marker(
                               point: LatLng(s.lat, s.lng),
                               width: 40,
                               height: 40,
-                              child: const Icon(
-                                Icons.location_on,
-                                color: Colors.red,
-                                size: 32,
+                              child: GestureDetector(
+                                onTap: () {
+                                  _mapController.move(LatLng(s.lat, s.lng), 15);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('${s.name}\n${s.address}'),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.red,
+                                  size: 32,
+                                ),
                               ),
                             ),
                         ],
@@ -297,47 +315,45 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                   ),
                 ),
                 _ =>
-                  withPrice.isEmpty
-                      ? const Center(child: Text(AppStrings.storesEmpty))
+                  filteredStores.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              q.isEmpty
+                                  ? AppStrings.storesEmpty
+                                  : 'Tidak ada toko yang cocok dengan "$q".',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        )
                       : ListView.builder(
                           padding: const EdgeInsets.all(12),
-                          itemCount: withPrice.length,
+                          itemCount: filteredStores.length,
                           itemBuilder: (context, i) {
-                            final entry = withPrice[i];
-                            final s = entry.store;
+                            final s = filteredStores[i];
                             return Card(
                               child: ListTile(
                                 leading: const Icon(Icons.store),
-                                title: Text(s.name),
+                                title: Text(
+                                  s.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 subtitle: Text(
                                   '${s.address}\n${s.distanceKm.toStringAsFixed(1)} km',
                                 ),
                                 isThreeLine: true,
-                                trailing: entry.price != null
-                                    ? Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          if (i == 0 && withPrice.length > 1)
-                                            const Text(
-                                              AppStrings.cheapestLabel,
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.green,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          Text(
-                                            formatRupiah(entry.price!),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : null,
+                                trailing: const Icon(
+                                  Icons.my_location,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                                onTap: () {
+                                  _mapController.move(LatLng(s.lat, s.lng), 15);
+                                },
                               ),
                             );
                           },

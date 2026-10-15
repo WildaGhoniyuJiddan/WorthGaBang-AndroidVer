@@ -113,6 +113,8 @@ abstract final class AppStrings {
   static const storesTitle = 'Toko Terdekat';
   static const refreshLabel = 'Muat';
   static const storesEmpty = 'Tidak ada toko di sekitar.';
+  static const searchStoreLabel = 'Cari nama toko';
+  static const searchStoreHint = 'cth: Computa, ELS Computer...';
   static const cheapestLabel = 'TERMURAH';
   static const demoLocationNote =
       'Izin lokasi tidak diberikan — memakai lokasi demo Jakarta.';

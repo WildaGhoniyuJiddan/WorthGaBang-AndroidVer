@@ -29,6 +29,17 @@ void main() {
       expect(stores.any((store) => store.name == 'ELS Computer'), isTrue);
       expect(stores.map((store) => store.id).toSet().length, stores.length);
     });
+
+    test('mencari toko berdasarkan nama (query)', () async {
+      final stores = await StoresApi().nearby(
+        lat: -7.78063,
+        lng: 110.37561,
+        query: 'ELS',
+      );
+
+      expect(stores, isNotEmpty);
+      expect(stores.every((s) => s.name.toLowerCase().contains('els')), isTrue);
+    });
   });
 
   group('Store.fromJson (kontrak B4)', () {
