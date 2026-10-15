@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'local_catalog.dart';
-import 'trend_models.dart';
+
+import 'package:worthbang/models/trend_models.dart';
 
 final trendsApiProvider = Provider<TrendsApi>((ref) => TrendsApi());
 
@@ -43,8 +44,7 @@ class TrendsApi {
     final prices = matched.map((e) => e.price).toList()..sort();
     final min = prices.first;
     final max = prices.last;
-    final avg =
-        prices.reduce((a, b) => a + b) / prices.length;
+    final avg = prices.reduce((a, b) => a + b) / prices.length;
 
     return TrendData(
       query: query,

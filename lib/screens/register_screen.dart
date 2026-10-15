@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:worthbang/l10n/strings.dart';
-import 'auth_controller.dart';
+import 'package:worthbang/providers/auth_controller.dart';
 
 /// Layar pendaftaran akun baru (langsung login bila sukses — kontrak B1).
 class RegisterScreen extends ConsumerStatefulWidget {

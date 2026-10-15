@@ -3,7 +3,8 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'game_models.dart';
+import 'package:worthbang/models/game_models.dart';
+
 import 'local_catalog.dart';
 
 final gameApiProvider = Provider<GameApi>((ref) => GameApi());

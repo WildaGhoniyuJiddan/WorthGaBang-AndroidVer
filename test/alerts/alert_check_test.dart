@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:worthbang/services/api_client.dart';
 import 'package:worthbang/services/alert_check_service.dart';
 import 'package:worthbang/services/alerts_api.dart';
-import 'package:worthbang/services/app_database.dart';
+import 'package:worthbang/services/app_database.dart' hide PriceAlert;
 import 'package:worthbang/services/price_check_api.dart';
 
 /// Stub ApiClient: hanya untuk harga pasar (/api/v1/analyze).

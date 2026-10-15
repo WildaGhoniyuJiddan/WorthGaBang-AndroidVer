@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/providers/providers.dart';
 import 'package:worthbang/services/api_client.dart';
-import 'chat_models.dart';
+import 'package:worthbang/models/chat_models.dart';
 
 final chatApiProvider = Provider<ChatApi>(
   (ref) => ChatApi(ref.watch(apiClientProvider)),

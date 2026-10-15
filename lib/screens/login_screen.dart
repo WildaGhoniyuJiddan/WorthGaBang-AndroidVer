@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:worthbang/providers/providers.dart';
+import 'package:worthbang/providers/auth_controller.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/auth_repository.dart';
-import 'auth_controller.dart';
 
 /// Layar masuk: email + password, opsi biometric, link ke registrasi.
 class LoginScreen extends ConsumerStatefulWidget {

@@ -3,7 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:worthbang/services/hash_chain_service.dart';
 import 'package:worthbang/services/api_client.dart';
 import 'package:worthbang/services/app_database.dart';
-import 'models.dart';
+import 'package:worthbang/models/price_check_models.dart';
 
 /// Repository riwayat: simpan hasil analisis sebagai blok hash chain (Drift).
 class HistoryRepository {

@@ -1,6 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:drift/drift.dart' show LazyDatabase;
+import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -9,6 +14,7 @@ import 'package:worthbang/services/alerts_api.dart';
 import 'package:worthbang/services/price_check_api.dart';
 import 'package:worthbang/services/dio_api_client.dart';
 import 'package:worthbang/services/token_storage.dart';
+import 'package:worthbang/services/app_database.dart';
 
 /// Nama task & tag untuk pengecekan price alert berkala.
 const String priceAlertTaskName = 'worthbang.priceAlertCheck';
@@ -20,23 +26,36 @@ void workmanagerCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     switch (task) {
       case priceAlertTaskName:
+        DioApiClient? client;
+        AppDatabase? db;
         try {
           // Rakit dependensi manual (tanpa Riverpod — isolate terpisah).
-          final client = DioApiClient(tokenStorage: TokenStorage());
+          final apiClient = DioApiClient(tokenStorage: TokenStorage());
+          client = apiClient;
+          final database = AppDatabase(
+            LazyDatabase(() async {
+              final dir = await getApplicationDocumentsDirectory();
+              final file = File(p.join(dir.path, 'worthbang.sqlite'));
+              return NativeDatabase.createInBackground(file);
+            }),
+          );
+          db = database;
           final prefs = await SharedPreferences.getInstance();
           final service = AlertCheckService(
-            alertsApi: AlertsApi(client),
-            priceCheckApi: PriceCheckApi(client),
+            alertsApi: AlertsApi(database),
+            priceCheckApi: PriceCheckApi(apiClient),
             notifier: LocalNotificationAlertNotifier(),
             dedup: SharedPrefsDedupStore(prefs),
           );
           final n = await service.checkNow();
           debugPrint('WorthBang: price alert check selesai, $n terpicu.');
-          client.close();
           return true;
         } catch (e) {
           debugPrint('WorthBang: price alert check gagal: $e');
           return false;
+        } finally {
+          client?.close();
+          await db?.close();
         }
     }
     return true;

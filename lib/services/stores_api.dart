@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'store_models.dart';
+import 'package:worthbang/models/store_models.dart';
 
 final storesApiProvider = Provider<StoresApi>((ref) => StoresApi());
 

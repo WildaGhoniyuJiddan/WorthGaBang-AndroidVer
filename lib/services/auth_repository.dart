@@ -8,7 +8,7 @@ import 'package:worthbang/services/api_client.dart';
 import 'package:worthbang/services/api_exception.dart';
 import 'package:worthbang/services/token_storage.dart';
 import 'package:worthbang/services/app_database.dart';
-import 'auth_models.dart';
+import 'package:worthbang/models/auth_models.dart';
 
 /// Repository auth: login/register/logout + sesi persisten.
 ///

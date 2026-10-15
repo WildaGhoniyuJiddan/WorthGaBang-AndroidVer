@@ -1,6 +1,6 @@
 import 'package:worthbang/services/api_client.dart';
-import 'bundle_models.dart';
-import 'models.dart';
+import 'package:worthbang/models/bundle_models.dart';
+import 'package:worthbang/models/price_check_models.dart';
 
 /// Akses endpoint price check (existing backend, tanpa perubahan).
 class PriceCheckApi {

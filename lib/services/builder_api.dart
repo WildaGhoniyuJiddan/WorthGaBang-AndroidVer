@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'builder_models.dart';
+import 'package:worthbang/models/builder_models.dart';
+
 import 'local_catalog.dart';
 
 final builderApiProvider = Provider<BuilderApi>((ref) => BuilderApi());
