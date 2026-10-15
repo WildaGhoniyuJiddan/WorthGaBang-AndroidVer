@@ -47,6 +47,7 @@ from ..schemas import (
     UserResponse,
 )
 from ..services.analysis import new_price_anchor
+from ..services.benchmark import consensus_lookup
 
 router = APIRouter(prefix="/api/v1", tags=["mobile"])
 
@@ -319,7 +320,15 @@ def _catalog_context(message: str, budget: int | None, limit: int = 14) -> str:
             mtok = set(re.findall(r"[a-z0-9]+", model.lower()))
             overlap = len(tokens & mtok)
             if overlap or (budget and price <= budget):
-                scored.append((overlap, f"[{key}] {model}", price))
+                # Tempel skor konsensus multi-sumber bila ada (grounding LLM).
+                tag = ""
+                if key in ("gpu", "cpu"):
+                    con = consensus_lookup(model, key)
+                    if con and con.get("consensus_score") is not None:
+                        tag = (f" [skor konsensus "
+                               f"{con['consensus_score']:.0f}/100, "
+                               f"{con['n_sources']} sumber]")
+                scored.append((overlap, f"[{key}] {model}{tag}", price))
     scored.sort(key=lambda x: (-x[0], x[2]))
     lines = [f"- {name}: Rp{price:,}".replace(",", ".") for _, name, price in scored[:limit]]
     return "\n".join(lines) if lines else "(katalog kosong)"

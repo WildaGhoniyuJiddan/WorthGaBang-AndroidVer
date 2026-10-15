@@ -11,7 +11,15 @@ from ..config import get_settings
 from ..models import LaptopUnit, RawListing, ScrapeRun
 from ..schemas import AnalyzeRequest, Comparison, Freshness
 from .relevance import component_type_from_query, is_relevant_pc_listing
-from .benchmark import better_alternatives, get_tier_label, laptop_combo_score, passmark_score
+from .benchmark import (
+    better_alternatives,
+    better_alternatives_consensus,
+    consensus_lookup,
+    consensus_tier_label,
+    get_tier_label,
+    laptop_combo_score,
+    passmark_score,
+)
 from .scoring import ScoreResult, score_price
 
 
@@ -942,27 +950,42 @@ def _laptop_benchmark_advice(request: AnalyzeRequest, comparisons, spec_map: dic
 
 
 def _benchmark_advice(request: AnalyzeRequest, result) -> tuple[str, list[dict]]:
-    """Advice PassMark: "di harga segitu lebih baik X (+N%)" atau info alternatif performa.
+    """Advice alternatif: "di harga segitu lebih baik X" berdasar skor benchmark.
+
+    Diutamakan skor KONSENSUS multi-sumber (2026-10-15); fallback ke PassMark
+    tunggal bila komponen tak punya skor konsensus.
 
     Return (recommendation_tambahan, alternatives). Kosong kalau model gak
     ketemu di katalog benchmark atau tidak ada kandidat yang layak.
     """
     ctype = request.component_type or component_type_from_query(request.query)
-    alts = better_alternatives(request.query, ctype, request.price, USD_TO_IDR)
+    alts = better_alternatives_consensus(
+        request.query, ctype, request.price, USD_TO_IDR)
+    use_consensus = bool(alts)
+    if not alts:
+        alts = better_alternatives(request.query, ctype, request.price, USD_TO_IDR)
     if not alts:
         return "", []
     best = alts[0]
     est_price_str = f"{best['est_price_idr']:,}".replace(",", ".")
-    score_str = f"{best['score']:,}".replace(",", ".")
+    if use_consensus:
+        # Skor konsensus 0-100 multi-sumber.
+        score_str = f"{best['score']}/100"
+        src_str = (f"skor konsensus {score_str} "
+                   f"({best.get('n_sources', '?')} sumber)")
+    else:
+        score_str = f"{best['score']:,}".replace(",", ".")
+        src_str = f"skor PassMark {score_str}"
+    gain_str = f"+{best['gain_percent']}%"
     if result.verdict in ("worth it", "wajar"):
         advice = (
             f"Ada alternatif dengan performa lebih tinggi di kisaran harga serupa: {best['name']} "
-            f"(performa +{best['gain_percent']}%, est. Rp{est_price_str}, skor PassMark {score_str})."
+            f"(performa {gain_str}, est. Rp{est_price_str}, {src_str})."
         )
     else:
         advice = (
-            f"Di harga segitu lebih baik {best['name']}: performa +{best['gain_percent']}% "
-            f"(est. Rp{est_price_str}) dengan skor PassMark {score_str}."
+            f"Di harga segitu lebih baik {best['name']}: performa {gain_str} "
+            f"(est. Rp{est_price_str}) dengan {src_str}."
         )
     return advice, alts
 
@@ -973,9 +996,18 @@ def analyze(session: Session, request: AnalyzeRequest):
         comparisons = _pc_comparisons(session, request)
         spec_map = {}
         ctype = request.component_type or component_type_from_query(request.query)
-        base = passmark_score(request.query, ctype)
-        if base and base.get("score"):
-            tier_label = get_tier_label(base["score"], ctype)
+        # Tier dari skor konsensus multi-sumber bila ada; fallback PassMark.
+        con = consensus_lookup(request.query, ctype)
+        if con and con.get("consensus_score") is not None:
+            tier_label = (
+                f"{consensus_tier_label(con['consensus_score'])} "
+                f"(skor konsensus {con['consensus_score']:.0f}/100, "
+                f"{con['n_sources']} sumber)"
+            )
+        else:
+            base = passmark_score(request.query, ctype)
+            if base and base.get("score"):
+                tier_label = get_tier_label(base["score"], ctype)
     else:
         comparisons, spec_map = _laptop_comparisons(session, request)
         user_combo = laptop_combo_score(

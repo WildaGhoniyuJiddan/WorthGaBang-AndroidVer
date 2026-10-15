@@ -292,3 +292,126 @@ def laptop_combo_score(cpu_text: str | None, gpu_text: str | None) -> dict | Non
         "is_igpu": is_igpu,
         "tier_label": get_tier_label(score_val, "laptop"),
     }
+
+
+# ---------------------------------------------------------------------------
+# Konsensus multi-sumber (2026-10-15): skor 0-100 dari rata-rata percentile
+# equal-weight antar sumber benchmark. Data: app/data/consensus_scores.json
+# (dibangun dari datasets/merged/benchmark_consensus.csv).
+# Diutamakan di atas skor PassMark tunggal bila tersedia.
+# ---------------------------------------------------------------------------
+
+_CONSENSUS_PATH = Path(__file__).resolve().parents[1] / "data" / "consensus_scores.json"
+_consensus: dict | None = None
+
+
+def _load_consensus() -> dict:
+    global _consensus
+    if _consensus is None:
+        try:
+            _consensus = json.loads(_CONSENSUS_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            _consensus = {"cpu": {}, "gpu": {}}
+    return _consensus
+
+
+def consensus_lookup(query: str, component_type: str | None) -> dict | None:
+    """Entri konsensus utk model di query. None bila tak ketemu.
+
+    Logika pencocokan nama sama dengan passmark_score (exact key, lalu
+    substring dua arah via squash).
+    """
+    if component_type not in ("gpu", "cpu"):
+        return None
+    text = (query or "").lower()
+    catalog = _load_consensus().get(component_type) or {}
+    if not catalog:
+        return None
+
+    for probe in (
+        f"geforce {text}", f"radeon {text}",
+        f"nvidia {text}", f"amd {text}", text,
+    ):
+        entry = catalog.get(" ".join(probe.split()))
+        if entry:
+            return entry
+
+    qsq = _sq(text)
+    best: tuple[int, dict] | None = None
+    for key, entry in catalog.items():
+        ksq = _sq(key)
+        if qsq in ksq or ksq in qsq:
+            if best is None or len(ksq) < len(_sq(best[1]["name"].lower())):
+                best = (len(ksq), entry)
+    return best[1] if best else None
+
+
+def consensus_tier_label(score: float | None) -> str:
+    """Label tier dari skor konsensus 0-100."""
+    if score is None:
+        return "Standard"
+    if score >= 80:
+        return "Kelas Atas (High End)"
+    if score >= 60:
+        return "Menengah Atas (Upper Midrange)"
+    if score >= 40:
+        return "Menengah (Midrange)"
+    if score >= 20:
+        return "Pemula (Entry Level)"
+    return "Dasar (Basic)"
+
+
+def better_alternatives_consensus(
+    query: str,
+    component_type: str,
+    price_idr: int,
+    usd_to_idr: float,
+    max_results: int = 2,
+) -> list[dict]:
+    """Kandidat alternatif berdasar skor KONSENSUS (0-100, multi-sumber).
+
+    Syarat kandidat: skor konsensus >= 10 poin di atas skor user DAN estimasi
+    harga IDR <= harga penawaran. Return [{name, score, est_price_idr,
+    gain_points, tier_label, n_sources}]. [] bila user tak punya skor konsensus.
+    """
+    base = consensus_lookup(query, component_type)
+    if not base or not price_idr:
+        return []
+    min_score = base["consensus_score"] + 10
+    base_vram = extract_vram_gb(query) if component_type == "gpu" else None
+
+    catalog = _load_consensus().get(component_type) or {}
+    pool = [
+        e for e in catalog.values()
+        if e["consensus_score"] >= min_score and e.get("price_usd")
+        and e["price_usd"] * usd_to_idr * 1.10 <= price_idr
+    ]
+
+    if base_vram and base_vram >= 12:
+        vram_kept = [e for e in pool
+                     if (extract_vram_gb(e["name"]) or 0) >= base_vram]
+        if vram_kept:
+            pool = vram_kept
+
+    pool.sort(key=lambda e: (e["price_usd"], -e["consensus_score"]))
+    out = []
+    for e in pool[:max_results]:
+        gain_pct = 0
+        if base["consensus_score"] > 0:
+            gain_pct = round(
+                (e["consensus_score"] / base["consensus_score"] - 1) * 100)
+        out.append(
+            {
+                "name": e["name"],
+                "score": int(round(e["consensus_score"])),
+                "est_price_idr": int(e["price_usd"] * usd_to_idr * 1.10),
+                "gain_percent": gain_pct,
+                "vram_gb": extract_vram_gb(e["name"])
+                if component_type == "gpu" else None,
+                "tier_label": consensus_tier_label(e["consensus_score"]),
+                # Ekstra (diabaikan schema lama, dipakai advice text):
+                "n_sources": e["n_sources"],
+                "score_source": "consensus",
+            }
+        )
+    return out

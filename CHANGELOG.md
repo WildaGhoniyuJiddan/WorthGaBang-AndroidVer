@@ -2,6 +2,23 @@
 
 Semua perubahan penting pada proyek ini dicatat di file ini.
 
+## 2026-10-15 — Integrasi dataset konsensus multi-sumber ke backend
+
+`backend/app/data/consensus_scores.json` baru (609 CPU + 123 GPU, 108KB):
+skor konsensus 0–100 (percentile equal-weight antar sumber benchmark),
+tier, jumlah sumber, agreement. Dibangun dari
+`datasets/merged/benchmark_consensus.csv`.
+
+Backend sekarang memakai skor konsensus bila tersedia, fallback ke PassMark:
+- `benchmark.py`: `consensus_lookup()` + `better_alternatives_consensus()`
+  + `consensus_tier_label()` (label Indonesia: Kelas Atas/Menengah Atas/...)
+- `analysis.py`: tier_label dan advice alternatif pakai konsensus dulu
+  ("skor konsensus 85/100 (4 sumber)")
+- Chatbot Bang Worth: `_catalog_context` menempelkan skor konsensus ke tiap
+  komponen di grounding ("[skor konsensus 97/100, 8 sumber]") agar jawaban
+  LLM berdasar data multi-sumber, bukan pengetahuan umum.
+- Backend tests: 28 passed.
+
 ## 2026-10-12 — Fase 3: backend ramping + fitur lokal Dart (Opsi 1)
 
 Backend (`backend/`) dipangkas ke endpoint yang tidak bisa dihitung lokal:
