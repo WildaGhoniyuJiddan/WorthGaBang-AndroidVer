@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:worthbang/services/api_exception.dart';
 import 'package:worthbang/services/api_result.dart';
 import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/l10n/strings.dart';
@@ -22,6 +23,7 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
   final _price = TextEditingController();
   final _maxPrice = TextEditingController();
 
+  String _mode = 'pc';
   ApiResult<AnalysisResult>? _state;
   SearchFilter _filter = const SearchFilter();
 
@@ -34,20 +36,43 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
   }
 
   Future<void> _search() async {
-    if (_query.text.trim().length < 2) return;
+    final queryText = _query.text.trim();
+    if (queryText.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.queryMin)),
+      );
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() => _state = const ApiLoading());
     try {
-      final result = await ref.read(priceCheckApiProvider).analyze(
-            mode: 'pc',
-            query: _query.text.trim(),
-            price: int.tryParse(
-                    _price.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
-                0,
-          );
+      final parsedPrice = int.tryParse(
+        _price.text.replaceAll(RegExp(r'[^0-9]'), ''),
+      );
+      final price = (parsedPrice != null && parsedPrice > 0) ? parsedPrice : 0;
+      AnalysisResult result;
+      try {
+        result = await ref.read(priceCheckApiProvider).analyze(
+              mode: _mode,
+              query: queryText,
+              price: price,
+            );
+      } on ApiException catch (apiErr) {
+        // Fallback jika instance backend masih memberlakukan validasi price > 0 (422)
+        if (price == 0 && apiErr.statusCode == 422) {
+          result = await ref.read(priceCheckApiProvider).analyze(
+                mode: _mode,
+                query: queryText,
+                price: 1,
+              );
+        } else {
+          rethrow;
+        }
+      }
       setState(() => _state = ApiSuccess(result));
     } catch (e) {
-      setState(() => _state = ApiError(e.toString()));
+      final message = e is ApiException ? e.message : e.toString();
+      setState(() => _state = ApiError(message));
     }
   }
 
@@ -66,12 +91,30 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(
+                  value: 'pc',
+                  label: Text('Komponen PC'),
+                  icon: Icon(Icons.memory_outlined),
+                ),
+                ButtonSegment(
+                  value: 'laptop',
+                  label: Text('Laptop'),
+                  icon: Icon(Icons.laptop_mac_outlined),
+                ),
+              ],
+              selected: {_mode},
+              onSelectionChanged: (set) => setState(() => _mode = set.first),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   flex: 3,
                   child: TextField(
                     controller: _query,
+                    textInputAction: TextInputAction.search,
                     decoration: const InputDecoration(
                       labelText: AppStrings.queryLabel,
                       prefixIcon: Icon(Icons.search),
@@ -85,8 +128,9 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
                   child: TextField(
                     controller: _price,
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.search,
                     decoration: const InputDecoration(
-                      labelText: AppStrings.priceLabel,
+                      labelText: AppStrings.searchPriceOptionalLabel,
                       prefixText: 'Rp ',
                     ),
                     onSubmitted: (_) => _search(),

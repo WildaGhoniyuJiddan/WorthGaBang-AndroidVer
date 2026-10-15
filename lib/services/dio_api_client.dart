@@ -171,8 +171,28 @@ class DioApiClient implements ApiClient {
     final status = e.response?.statusCode;
     final data = e.response?.data;
     var message = 'Terjadi kesalahan jaringan. Coba lagi.';
-    if (data is Map && data['detail'] is String) {
-      message = data['detail'] as String;
+    if (data is Map) {
+      final detail = data['detail'];
+      if (detail is String && detail.isNotEmpty) {
+        message = detail;
+      } else if (detail is List && detail.isNotEmpty) {
+        final messages = <String>[];
+        for (final item in detail) {
+          if (item is Map && item['msg'] != null) {
+            messages.add(item['msg'].toString());
+          } else if (item != null) {
+            messages.add(item.toString());
+          }
+        }
+        if (messages.isNotEmpty) {
+          message = messages.join('\n');
+        }
+      } else if (data['message'] is String &&
+          (data['message'] as String).isNotEmpty) {
+        message = data['message'] as String;
+      }
+    } else if (data is String && data.isNotEmpty) {
+      message = data;
     } else if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       message = 'Koneksi timeout. Periksa internet Anda.';

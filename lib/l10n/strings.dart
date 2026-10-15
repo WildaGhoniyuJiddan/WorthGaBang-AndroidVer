@@ -77,6 +77,7 @@ abstract final class AppStrings {
   // Search filter & sort (T5).
   static const searchScreenTitle = 'Cari Produk';
   static const searchButton = 'Cari';
+  static const searchPriceOptionalLabel = 'Harga (opsional)';
   static const maxPriceLabel = 'Harga maks';
   static const sortLabel = 'Urutkan';
   static const searchEmpty = 'Tidak ada listing yang cocok dengan filter.';

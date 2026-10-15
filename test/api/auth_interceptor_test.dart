@@ -163,5 +163,28 @@ void main() {
       expect(adapter.calls.single.auth, isNull);
       client.close();
     });
+
+    test('ekstraksi pesan error FastAPI list detail ke ApiException', () async {
+      final storage = TokenStorage(MemorySecureKv());
+      final adapter = _FakeAdapter((options) async {
+        return _json({
+          'detail': [
+            {'loc': ['body', 'price'], 'msg': 'Input should be greater than 0', 'type': 'greater_than'},
+          ],
+        }, 422);
+      });
+
+      final dio = Dio(BaseOptions(baseUrl: devBaseUrl))
+        ..httpClientAdapter = adapter;
+      final client = DioApiClient(tokenStorage: storage, dio: dio);
+
+      expect(
+        () => client.postJson('/api/v1/test', body: {}),
+        throwsA(isA<ApiException>()
+            .having((e) => e.statusCode, 'statusCode', 422)
+            .having((e) => e.message, 'message', 'Input should be greater than 0')),
+      );
+      client.close();
+    });
   });
 }

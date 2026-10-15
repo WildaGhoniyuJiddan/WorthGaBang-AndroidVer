@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
+import os
 import traceback
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
@@ -72,9 +73,9 @@ def analyze_price(
 ) -> AnalyzeResponse:
     result, comparisons, freshness, alternatives = analyze(db, payload)
     log = AnalysisLog(mode=payload.mode, input_query=payload.query, result_score=result.score)
-    # Additive: attribute mobile history when a valid Bearer token is present.
+    # Additive: attribute mobile history when a valid Bearer token is present and price was checked.
     # Response shape/behavior for existing callers is unchanged.
-    if opt_user is not None:
+    if opt_user is not None and payload.price > 0:
         log.user_id = opt_user.id
         log.input_price = payload.price
         log.verdict = result.verdict

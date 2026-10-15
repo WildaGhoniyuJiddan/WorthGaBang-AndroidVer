@@ -9,7 +9,7 @@ class AnalyzeRequest(BaseModel):
     # PC: query wajib (model komponen). Laptop: boleh pakai cpu/gpu/ram_gb/
     # storage_gb tanpa query (frontend isi field terpisah).
     query: str = Field(default="", min_length=0, max_length=255)
-    price: int = Field(gt=0)
+    price: int = Field(default=0, ge=0)
     component_type: Optional[str] = Field(default=None, max_length=32)
     brand: Optional[str] = Field(default=None, max_length=64)
     model: Optional[str] = Field(default=None, max_length=255)
