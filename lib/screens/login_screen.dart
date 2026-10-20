@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:worthbang/providers/providers.dart';
 import 'package:worthbang/providers/auth_controller.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/auth_repository.dart';
 import 'package:worthbang/widgets/app_logo.dart';
@@ -64,17 +66,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       appBar: AppBar(title: const Text(AppStrings.loginTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Center(child: AppLogo(size: 88, borderRadius: 22)),
-                const SizedBox(height: 20),
+                const SizedBox(height: MonexSpacing.sectionGap),
                 Text(AppStrings.appTagline,
                     style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 24),
+                const SizedBox(height: MonexSpacing.sectionGap),
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
@@ -86,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ? AppStrings.emailInvalid
                       : null,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: MonexSpacing.gridGap),
                 TextFormField(
                   controller: _password,
                   obscureText: _obscure,
@@ -111,31 +118,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.error)),
                 ],
-                const SizedBox(height: 24),
-                FilledButton(
+                const SizedBox(height: MonexSpacing.sectionGap),
+                MonexPrimaryButton(
+                  label: AppStrings.loginButton,
+                  loading: state.isLoading,
                   onPressed: state.isLoading ? null : _submit,
-                  child: state.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text(AppStrings.loginButton),
                 ),
                 if (_bioAvailable) ...[
                   const SizedBox(height: 12),
-                  OutlinedButton.icon(
+                  MonexSecondaryButton(
+                    label: AppStrings.biometricButton,
+                    icon: Icons.fingerprint,
                     onPressed: () async {
                       final ok = await ref
                           .read(authControllerProvider.notifier)
                           .unlockWithBiometric();
                       if (ok && context.mounted) context.go('/home');
                     },
-                    icon: const Icon(Icons.fingerprint),
-                    label: const Text(AppStrings.biometricButton),
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: MonexSpacing.gridGap),
                 TextButton(
                   onPressed: () => context.push('/register'),
                   child: const Text(AppStrings.goToRegister),

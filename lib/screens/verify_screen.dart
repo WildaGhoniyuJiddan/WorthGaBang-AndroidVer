@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/services/hash_chain_service.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/services/app_database.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/screens/price_check_screen.dart';
@@ -78,42 +80,53 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.verifyTitle)),
       body: results == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: MonexOrbitLoader(size: 56))
           : ListView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(
+                MonexSpacing.screenPaddingH,
+                MonexSpacing.screenPaddingV,
+                MonexSpacing.screenPaddingH,
+                24,
+              ),
               children: [
-                Card(
+                MonexSurfaceCard(
                   color: results.isEmpty
                       ? null
                       : allOk
-                          ? Colors.green.withValues(alpha: 0.12)
-                          : Colors.red.withValues(alpha: 0.12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Icon(
+                          ? MonexColors.verdictGood.withValues(alpha: 0.12)
+                          : MonexColors.danger.withValues(alpha: 0.12),
+                  borderColor: results.isEmpty
+                      ? null
+                      : allOk
+                          ? MonexColors.verdictGood.withValues(alpha: 0.4)
+                          : MonexColors.danger.withValues(alpha: 0.4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        results.isEmpty
+                            ? Icons.info_outline
+                            : allOk
+                                ? Icons.verified
+                                : Icons.warning_amber_rounded,
+                        size: 32,
+                        color: allOk
+                            ? MonexColors.verdictGood
+                            : results.isEmpty
+                                ? null
+                                : MonexColors.danger,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
                           results.isEmpty
-                              ? Icons.info_outline
+                              ? AppStrings.verifyEmpty
                               : allOk
-                                  ? Icons.verified
-                                  : Icons.warning_amber_rounded,
-                          size: 32,
+                                  ? AppStrings.verifyOk(results.length)
+                                  : AppStrings.verifyFailed,
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            results.isEmpty
-                                ? AppStrings.verifyEmpty
-                                : allOk
-                                    ? AppStrings.verifyOk(
-                                        results.length)
-                                    : AppStrings.verifyFailed,
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 if (_tamperedDemo)
@@ -123,30 +136,44 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                   ),
                 const SizedBox(height: 12),
                 for (final r in results)
-                  ListTile(
-                    leading: Icon(
-                      r.ok ? Icons.check_circle : Icons.cancel,
-                      color: r.ok ? Colors.green : Colors.red,
-                    ),
-                    title: Text('Blok #${r.block.id}'),
-                    subtitle: Text(
-                      'hash: ${r.block.hash.isEmpty ? '-' : r.block.hash.substring(0, 12)}…',
-                      style: const TextStyle(fontFamily: 'monospace'),
-                    ),
-                    trailing: Text(
-                      r.ok ? 'VALID' : 'RUSAK',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: r.ok ? Colors.green : Colors.red,
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        bottom: MonexSpacing.gridGap),
+                    child: MonexSurfaceCard(
+                      padding: const EdgeInsets.all(
+                          MonexSpacing.cardPaddingCompact),
+                      radius: MonexSpacing.radiusMd,
+                      child: MonexTransactionTile(
+                        title: 'Blok #${r.block.id}',
+                        subtitle:
+                            'hash: ${r.block.hash.isEmpty ? '-' : r.block.hash.substring(0, 12)}…',
+                        leadingIcon: r.ok
+                            ? Icons.check_circle_outline
+                            : Icons.cancel_outlined,
+                        leadingColor: r.ok
+                            ? MonexColors.verdictGood
+                            : MonexColors.danger,
+                        leadingBackground: r.ok
+                            ? MonexColors.verdictGood.withValues(alpha: 0.14)
+                            : MonexColors.danger.withValues(alpha: 0.14),
+                        padding: EdgeInsets.zero,
+                        trailing: Text(
+                          r.ok ? 'VALID' : 'RUSAK',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: r.ok
+                                ? MonexColors.verdictGood
+                                : MonexColors.danger,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 const SizedBox(height: 16),
-                OutlinedButton.icon(
+                MonexSecondaryButton(
                   onPressed: _verify,
-                  icon: const Icon(Icons.refresh),
-                  label:
-                      const Text(AppStrings.verifyChainButton),
+                  icon: Icons.refresh_rounded,
+                  label: AppStrings.verifyChainButton,
                 ),
                 const SizedBox(height: 8),
                 TextButton.icon(

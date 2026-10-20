@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:worthbang/providers/auth_controller.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
+import 'package:worthbang/screens/price_check_screen.dart';
 import 'package:worthbang/screens/login_screen.dart';
 import 'package:worthbang/screens/register_screen.dart';
 import 'package:worthbang/screens/tab_screens.dart';
@@ -113,28 +115,35 @@ class BottomNavShell extends ConsumerWidget {
           Expanded(child: navigationShell),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
+      // FAB aksi utama (DESIGN(reset) §5.6): cek harga cepat.
+      floatingActionButton: MonexFab(
+        tooltip: AppStrings.priceCheckTitle,
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const PriceCheckScreen()),
+        ),
+      ),
+      bottomNavigationBar: MonexBottomNavBar(
         selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _goBranch,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+        onSelected: _goBranch,
+        items: const [
+          MonexNavItem(
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home,
             label: AppStrings.tabHome,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
+          MonexNavItem(
+            icon: Icons.search_outlined,
+            selectedIcon: Icons.search,
             label: AppStrings.tabSearch,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
+          MonexNavItem(
+            icon: Icons.history_outlined,
+            selectedIcon: Icons.history,
             label: AppStrings.tabHistory,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+          MonexNavItem(
+            icon: Icons.person_outline,
+            selectedIcon: Icons.person,
             label: AppStrings.tabProfile,
           ),
         ],

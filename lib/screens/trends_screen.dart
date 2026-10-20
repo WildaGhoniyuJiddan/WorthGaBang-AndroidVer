@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/services/api_result.dart';
 import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/l10n/strings.dart';
@@ -62,7 +64,12 @@ class _TrendsScreenContentState
       appBar: AppBar(title: const Text(AppStrings.trendTitle)),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           children: [
             Row(
               children: [
@@ -79,6 +86,8 @@ class _TrendsScreenContentState
                 const SizedBox(width: 8),
                 DropdownButton<int>(
                   value: _days,
+                  underline: const SizedBox.shrink(),
+                  style: Theme.of(context).textTheme.titleSmall,
                   items: const [7, 30, 90]
                       .map((d) => DropdownMenuItem(
                           value: d, child: Text('$d hari')))
@@ -90,17 +99,19 @@ class _TrendsScreenContentState
                   },
                 ),
                 const SizedBox(width: 8),
-                FilledButton(
+                MonexPrimaryButton(
                   onPressed: state is ApiLoading ? null : _load,
-                  child: const Text(AppStrings.searchButton),
+                  label: AppStrings.searchButton,
+                  expanded: false,
+                  loading: state is ApiLoading,
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: MonexSpacing.sectionGap),
             if (state is ApiLoading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: MonexOrbitLoader(size: 56)),
               ),
             if (state is ApiError)
               Padding(
@@ -113,20 +124,20 @@ class _TrendsScreenContentState
               ),
             if (data != null) ...[
               _StatsRow(data: data),
-              const SizedBox(height: 12),
+              const SizedBox(height: MonexSpacing.gridGap),
               if (data.points.isNotEmpty) ...[
                 SizedBox(height: 240, child: _TrendChart(data: data)),
-                const SizedBox(height: 12),
+                const SizedBox(height: MonexSpacing.gridGap),
               ],
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    data.summary.isNotEmpty
-                        ? data.summary
-                        : data.localSummary(),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+              MonexSurfaceCard(
+                padding:
+                    const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+                radius: MonexSpacing.radiusMd,
+                child: Text(
+                  data.summary.isNotEmpty
+                      ? data.summary
+                      : data.localSummary(),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
             ],
@@ -144,8 +155,11 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final change = data.changePercent;
-    final changeColor =
-        change < 0 ? Colors.green : change > 0 ? Colors.red : Colors.grey;
+    final Color? changeColor = change < 0
+        ? MonexColors.verdictGood
+        : change > 0
+            ? MonexColors.danger
+            : null;
     return Row(
       children: [
         _stat(context, 'Terendah', formatRupiah(data.min)),
@@ -164,18 +178,30 @@ class _StatsRow extends StatelessWidget {
   Widget _stat(BuildContext context, String label, String value,
       {Color? valueColor}) {
     return Expanded(
-      child: Card(
-        child: Padding(
+      child: Padding(
+        padding: const EdgeInsets.only(right: MonexSpacing.gridGap),
+        child: MonexSurfaceCard(
+          radius: MonexSpacing.radiusMd,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           child: Column(
             children: [
-              Text(label,
-                  style: Theme.of(context).textTheme.labelSmall),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               const SizedBox(height: 4),
-              Text(value,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: valueColor),
-                  textAlign: TextAlign.center),
+              Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: valueColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
@@ -190,6 +216,8 @@ class _TrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final axisColor = theme.textTheme.bodySmall?.color ?? MonexColors.textMuted;
     final spots = data.points
         .asMap()
         .entries
@@ -199,72 +227,79 @@ class _TrendChart extends StatelessWidget {
     final maxY = (data.max / 1e6 * 1.02).ceilToDouble();
     final dateFmt = DateFormat('d/M');
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
-        child: LineChart(
-          LineChartData(
-            minY: minY,
-            maxY: maxY,
-            gridData: const FlGridData(show: true, drawVerticalLine: false),
-            titlesData: FlTitlesData(
-              topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 36,
-                  getTitlesWidget: (v, _) => Text(
-                    '${v.toStringAsFixed(1)}jt',
-                    style: const TextStyle(fontSize: 10),
-                  ),
-                ),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: (spots.length / 4).ceilToDouble(),
-                  getTitlesWidget: (v, _) {
-                    final i = v.toInt();
-                    if (i < 0 || i >= data.points.length) {
-                      return const SizedBox.shrink();
-                    }
-                    return Text(
-                      dateFmt.format(data.points[i].date),
-                      style: const TextStyle(fontSize: 10),
-                    );
-                  },
+    return MonexSurfaceCard(
+      radius: MonexSpacing.radiusMd,
+      padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
+      child: LineChart(
+        LineChartData(
+          minY: minY,
+          maxY: maxY,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: MonexColors.chartTrack,
+              strokeWidth: 1,
+            ),
+          ),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 36,
+                getTitlesWidget: (v, _) => Text(
+                  '${v.toStringAsFixed(1)}jt',
+                  style: TextStyle(fontSize: 10, color: axisColor),
                 ),
               ),
             ),
-            lineBarsData: [
-              LineChartBarData(
-                spots: spots,
-                isCurved: true,
-                barWidth: 2.5,
-                color: Theme.of(context).colorScheme.primary,
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withValues(alpha: 0.15),
-                ),
-                dotData: const FlDotData(show: false),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                interval: (spots.length / 4).ceilToDouble(),
+                getTitlesWidget: (v, _) {
+                  final i = v.toInt();
+                  if (i < 0 || i >= data.points.length) {
+                    return const SizedBox.shrink();
+                  }
+                  return Text(
+                    dateFmt.format(data.points[i].date),
+                    style: TextStyle(fontSize: 10, color: axisColor),
+                  );
+                },
               ),
-            ],
-            lineTouchData: LineTouchData(
-              touchTooltipData: LineTouchTooltipData(
-                getTooltipItems: (touched) => touched
-                    .map((s) => LineTooltipItem(
-                          '${dateFmt.format(data.points[s.x.toInt()].date)}\n'
-                          '${formatRupiah((s.y * 1e6).round())}',
-                          const TextStyle(fontWeight: FontWeight.bold),
-                        ))
-                    .toList(),
+            ),
+          ),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              barWidth: 2.5,
+              color: MonexColors.lime,
+              belowBarData: BarAreaData(
+                show: true,
+                color: MonexColors.limeMuted,
               ),
+              dotData: const FlDotData(show: false),
+            ),
+          ],
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipItems: (touched) => touched
+                  .map((s) => LineTooltipItem(
+                        '${dateFmt.format(data.points[s.x.toInt()].date)}\n'
+                        '${formatRupiah((s.y * 1e6).round())}',
+                        const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: MonexColors.textDark,
+                        ),
+                      ))
+                  .toList(),
+              getTooltipColor: (_) => MonexColors.surfaceElevated,
             ),
           ),
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/screens/builder_screen.dart';
 import 'package:worthbang/screens/chat_screen.dart';
@@ -75,7 +77,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -84,77 +85,87 @@ class HomeScreen extends StatelessWidget {
           child: AppLogo(size: 40, borderRadius: 10),
         ),
         title: const Text(AppStrings.homeTitle),
+        titleSpacing: 4,
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(
+          MonexSpacing.screenPaddingH,
+          MonexSpacing.screenPaddingV,
+          MonexSpacing.screenPaddingH,
+          24,
+        ),
         children: [
           Text(
             AppStrings.homeGreeting,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             AppStrings.appTagline,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
+            style: theme.textTheme.bodyMedium,
           ),
-          const SizedBox(height: 20),
-          Card(
-            color: colors.primaryContainer,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => _openPage(context, const PriceCheckScreen()),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.price_check_rounded,
-                      size: 38,
-                      color: colors.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppStrings.priceCheckTitle,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: colors.onPrimaryContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            AppStrings.homePriceCheckSubtitle,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colors.onPrimaryContainer,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: colors.onPrimaryContainer,
-                    ),
-                  ],
+          const SizedBox(height: MonexSpacing.sectionGap),
+          // Hero card — gradien lime (kartu utama DESIGN(reset) §5.3).
+          MonexGradientCard(
+            onTap: () => _openPage(context, const PriceCheckScreen()),
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: MonexColors.textDark.withValues(alpha: 0.10),
+                    borderRadius:
+                        BorderRadius.circular(MonexSpacing.radiusMd),
+                  ),
+                  child: const Icon(
+                    Icons.price_check_rounded,
+                    size: 26,
+                    color: MonexColors.textDark,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.priceCheckTitle,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: MonexColors.textDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        AppStrings.homePriceCheckSubtitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: MonexColors.textDark.withValues(alpha: 0.72),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: MonexColors.textDark,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: MonexSpacing.sectionGap),
           Text(
             AppStrings.homeExploreTitle,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: theme.textTheme.titleLarge,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: MonexSpacing.gridGap),
           LayoutBuilder(
             builder: (context, constraints) {
               final columns = constraints.maxWidth >= 600 ? 3 : 2;
@@ -164,9 +175,11 @@ class HomeScreen extends StatelessWidget {
                 itemCount: _menus.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: columns,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: columns == 2 ? 1.16 : 1.05,
+                  crossAxisSpacing: MonexSpacing.gridGap,
+                  mainAxisSpacing: MonexSpacing.gridGap,
+                  // Rasio adjusted supaya judul 2 baris + subtitle 2 baris
+                  // tidak overflow di layar sempit (320dp).
+                  childAspectRatio: columns == 2 ? 1.02 : 0.95,
                 ),
                 itemBuilder: (context, index) {
                   final menu = _menus[index];
@@ -210,39 +223,41 @@ class _HomeMenuCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(item.icon, size: 28, color: colors.primary),
-              const Spacer(),
-              Text(
-                item.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item.subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ],
+    return MonexSurfaceCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+      radius: MonexSpacing.radiusMd,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: MonexColors.limeMuted,
+              borderRadius: BorderRadius.circular(MonexSpacing.radiusSm),
+            ),
+            child: Icon(item.icon, size: 20, color: MonexColors.lime),
           ),
-        ),
+          const SizedBox(height: 10),
+          Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Expanded(
+            child: Text(
+              item.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
     );
   }

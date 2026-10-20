@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/widgets/verdict_badge.dart';
 import 'package:worthbang/l10n/strings.dart';
@@ -22,9 +24,12 @@ class ResultScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final r = result;
+    final theme = Theme.of(context);
+    final verdict = verdictFromString(r.verdict);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(r.query),
+        title: Text(r.query, overflow: TextOverflow.ellipsis),
         actions: [
           IconButton(
             icon: const Icon(Icons.favorite_outline),
@@ -37,16 +42,15 @@ class ResultScreen extends ConsumerWidget {
                       targetPrice: r.inputPrice,
                     );
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text(AppStrings.wishlistAdded)),
+                  showMonexToast(
+                    context,
+                    AppStrings.wishlistAdded,
+                    isSuccess: true,
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString())),
-                  );
+                  showMonexToast(context, e.toString(), isError: true);
                 }
               }
             },
@@ -56,59 +60,108 @@ class ResultScreen extends ConsumerWidget {
             tooltip: AppStrings.addAlert,
             onPressed: () => _showAlertDialog(context, ref, r),
           ),
+          const SizedBox(width: 12),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          MonexSpacing.screenPaddingH,
+          MonexSpacing.screenPaddingV,
+          MonexSpacing.screenPaddingH,
+          24,
+        ),
         children: [
-          Row(
-            children: [
-              VerdictBadge(verdict: verdictFromString(r.verdict)),
-              const SizedBox(width: 12),
-              Text(
-                'Skor ${r.score.toStringAsFixed(0)}/100',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Harga input: ${formatRupiah(r.inputPrice)}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          if (r.referencePrice != null)
-            Text('Median pasar: ${formatRupiah(r.referencePrice!)}'),
-          if (r.fairPriceLow != null && r.fairPriceHigh != null)
-            Text(
-              'Rentang wajar: ${formatRupiah(r.fairPriceLow!)} – ${formatRupiah(r.fairPriceHigh!)}',
+          // Hero: verdict + skor.
+          MonexSurfaceCard(
+            padding: const EdgeInsets.all(MonexSpacing.cardPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: VerdictBadge(verdict: verdict),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Skor ${r.score.toStringAsFixed(0)}/100',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: MonexSpacing.sectionGap),
+                MonexProgressBar(
+                  value: r.score / 100,
+                  color: AppThemeVerdictColor.of(verdict),
+                ),
+                const SizedBox(height: MonexSpacing.sectionGap),
+                Text(
+                  'Harga input: ${formatRupiah(r.inputPrice)}',
+                  style: theme.textTheme.titleMedium,
+                ),
+                if (r.referencePrice != null)
+                  Text(
+                    'Median pasar: ${formatRupiah(r.referencePrice!)}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                if (r.fairPriceLow != null && r.fairPriceHigh != null)
+                  Text(
+                    'Rentang wajar: ${formatRupiah(r.fairPriceLow!)} – ${formatRupiah(r.fairPriceHigh!)}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                if (r.priceDeltaPercent != null)
+                  Text(
+                    'Selisih: ${r.priceDeltaPercent!.toStringAsFixed(1)}% dari median',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+              ],
             ),
-          if (r.priceDeltaPercent != null)
-            Text(
-              'Selisih: ${r.priceDeltaPercent!.toStringAsFixed(1)}% dari median',
-            ),
+          ),
           if (r.recommendation != null) ...[
-            const SizedBox(height: 12),
-            Text(r.recommendation!),
+            const SizedBox(height: MonexSpacing.sectionGap),
+            MonexSurfaceCard(
+              padding: const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+              color: MonexColors.limeMuted,
+              borderColor: MonexColors.lime.withValues(alpha: 0.35),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.tips_and_updates_outlined,
+                      size: 18, color: MonexColors.lime),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      r.recommendation!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
+          const SizedBox(height: MonexSpacing.sectionGap),
+          MonexSecondaryButton(
+            label: AppStrings.viewTrendButton,
+            icon: Icons.show_chart_rounded,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) =>
                     TrendsScreenContent(initialQuery: r.query),
               ),
             ),
-            icon: const Icon(Icons.show_chart),
-            label: const Text(AppStrings.viewTrendButton),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               const Icon(Icons.link, size: 16),
               const SizedBox(width: 4),
-              Text(
-                'Tersimpan di riwayat (blok #$blockId, hash chain)',
-                style: Theme.of(context).textTheme.bodySmall,
+              Expanded(
+                child: Text(
+                  'Tersimpan di riwayat (blok #$blockId, hash chain)',
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
             ],
           ),
@@ -118,63 +171,87 @@ class ResultScreen extends ConsumerWidget {
               children: [
                 const Icon(Icons.update, size: 16),
                 const SizedBox(width: 4),
-                Text(
-                  'Data: ${r.freshnessLabel!}${r.isStale ? ' (basi)' : ''}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                Expanded(
+                  child: Text(
+                    'Data: ${r.freshnessLabel!}${r.isStale ? ' (basi)' : ''}',
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ),
               ],
             ),
           ],
           if (r.comparisons.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: MonexSpacing.sectionGap),
             Text(
               'Pembanding (${r.listingCount} listing)',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: MonexSpacing.gridGap),
             for (final c in r.comparisons)
-              Card(
-                child: ListTile(
-                  title: Text(c.title,
-                      maxLines: 2, overflow: TextOverflow.ellipsis),
-                  subtitle: Text(
-                      '${c.source}${c.condition != null ? ' • ${c.condition}' : ''}'),
+              MonexSurfaceCard(
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+                radius: MonexSpacing.radiusMd,
+                child: MonexTransactionTile(
+                  title: c.title,
+                  subtitle:
+                      '${c.source}${c.condition != null ? ' • ${c.condition}' : ''}',
+                  padding: EdgeInsets.zero,
                   trailing: Text(
                     formatRupiah(c.price),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleSmall,
                   ),
                 ),
               ),
           ],
           if (r.alternatives.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: MonexSpacing.sectionGap),
             Text(
               'Alternatif',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: MonexSpacing.gridGap),
             for (final a in r.alternatives)
-              Card(
-                child: ListTile(
-                  title: Text(a.name),
+              MonexSurfaceCard(
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+                radius: MonexSpacing.radiusMd,
+                child: MonexTransactionTile(
+                  title: a.name,
                   subtitle: a.gainPercent != null
-                      ? Text(
-                          '+${a.gainPercent!.toStringAsFixed(0)}% performa')
+                      ? '+${a.gainPercent!.toStringAsFixed(0)}% performa'
                       : null,
-                  trailing: Text(formatRupiah(a.estPriceIdr)),
+                  padding: EdgeInsets.zero,
+                  trailing: Text(
+                    formatRupiah(a.estPriceIdr),
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
               ),
           ],
           const SizedBox(height: 24),
-          OutlinedButton.icon(
+          MonexSecondaryButton(
+            label: AppStrings.doneButton,
+            icon: Icons.check_rounded,
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.check),
-            label: const Text(AppStrings.doneButton),
           ),
         ],
       ),
     );
   }
+}
+
+/// Pemetaan verdict → warna accent (lime untuk bagus, amber wajar, danger
+/// kemahalan). Dipisah agar widget library tidak bergantung pada
+/// `VerdictBadge` (dan sebaliknya).
+class AppThemeVerdictColor {
+  const AppThemeVerdictColor._();
+
+  static Color of(Verdict verdict) => switch (verdict) {
+        Verdict.good => MonexColors.verdictGood,
+        Verdict.fair => MonexColors.verdictFair,
+        Verdict.bad => MonexColors.verdictBad,
+      };
 }
 
 /// Dialog buat price alert: input target harga → simpan lokal.
@@ -218,14 +295,11 @@ Future<void> _showAlertDialog(
           targetPrice: price,
         );
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.alertAdded)),
-      );
+      showMonexToast(context, AppStrings.alertAdded, isSuccess: true);
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      showMonexToast(context, e.toString(), isError: true);
     }
   }
 }

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/providers/auth_controller.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/widgets/app_logo.dart';
 
 /// Layar pendaftaran akun baru (langsung login bila sukses — kontrak B1).
@@ -46,14 +48,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       appBar: AppBar(title: const Text(AppStrings.registerTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Center(child: AppLogo(size: 88, borderRadius: 22)),
-                const SizedBox(height: 20),
+                const SizedBox(height: MonexSpacing.sectionGap),
                 TextFormField(
                   controller: _name,
                   decoration: const InputDecoration(
@@ -64,7 +71,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ? AppStrings.nameRequired
                       : null,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: MonexSpacing.gridGap),
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
@@ -76,7 +83,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ? AppStrings.emailInvalid
                       : null,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: MonexSpacing.gridGap),
                 TextFormField(
                   controller: _password,
                   obscureText: _obscure,
@@ -105,18 +112,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 24),
-                FilledButton(
+                const SizedBox(height: MonexSpacing.sectionGap),
+                MonexPrimaryButton(
+                  label: AppStrings.registerButton,
+                  loading: state.isLoading,
                   onPressed: state.isLoading ? null : _submit,
-                  child: state.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text(AppStrings.registerButton),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: MonexSpacing.gridGap),
                 TextButton(
                   onPressed: () => context.pop(),
                   child: const Text(AppStrings.goToLogin),

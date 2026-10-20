@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/services/api_exception.dart';
 import 'package:worthbang/services/api_result.dart';
 import 'package:worthbang/utils/rupiah.dart';
@@ -35,8 +37,7 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
   Future<void> _search() async {
     final queryText = _query.text.trim();
     if (queryText.length < 2) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text(AppStrings.queryMin)));
+      showMonexToast(context, AppStrings.queryMin, isError: true);
       return;
     }
     FocusScope.of(context).unfocus();
@@ -66,29 +67,35 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
         : const <PriceComparison>[];
     final sources = comparisons?.map((c) => c.source).toSet().toList() ?? [];
 
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.searchScreenTitle)),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           children: [
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(
+            MonexSegmentedControl<String>(
+              value: _mode,
+              onChanged: (v) => setState(() => _mode = v),
+              items: const [
+                MonexSegment(
                   value: 'pc',
-                  label: Text('Komponen PC'),
-                  icon: Icon(Icons.memory_outlined),
+                  label: 'Komponen PC',
+                  icon: Icons.memory_outlined,
                 ),
-                ButtonSegment(
+                MonexSegment(
                   value: 'laptop',
-                  label: Text('Laptop'),
-                  icon: Icon(Icons.laptop_mac_outlined),
+                  label: 'Laptop',
+                  icon: Icons.laptop_mac_outlined,
                 ),
               ],
-              selected: {_mode},
-              onSelectionChanged: (set) => setState(() => _mode = set.first),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: MonexSpacing.sectionGap),
             Row(
               children: [
                 Expanded(
@@ -103,16 +110,18 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(
+                MonexPrimaryButton(
+                  label: AppStrings.searchButton,
+                  expanded: false,
+                  loading: state is ApiLoading,
                   onPressed: state is ApiLoading ? null : _search,
-                  child: const Text(AppStrings.searchButton),
                 ),
               ],
             ),
             if (state is ApiLoading)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(child: MonexOrbitLoader(size: 56)),
               ),
             if (state is ApiError)
               Padding(
@@ -214,23 +223,26 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
               ),
               const SizedBox(height: 12),
               for (final c in filtered)
-                Card(
-                  child: ListTile(
-                    title: Text(
-                      c.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      '${c.source}${switch (c.condition) {
+                Padding(
+                  padding: const EdgeInsets.only(bottom: MonexSpacing.gridGap),
+                  child: MonexSurfaceCard(
+                    padding:
+                        const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+                    radius: MonexSpacing.radiusMd,
+                    child: MonexTransactionTile(
+                      title: c.title,
+                      titleStyle: theme.textTheme.titleSmall,
+                      subtitle:
+                          '${c.source}${switch (c.condition) {
                         'new' => ' • baru',
                         'second' => ' • bekas',
                         final condition => condition == null ? '' : ' • $condition',
                       }}',
-                    ),
-                    trailing: Text(
-                      formatRupiah(c.price),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      padding: EdgeInsets.zero,
+                      trailing: Text(
+                        formatRupiah(c.price),
+                        style: theme.textTheme.titleSmall,
+                      ),
                     ),
                   ),
                 ),

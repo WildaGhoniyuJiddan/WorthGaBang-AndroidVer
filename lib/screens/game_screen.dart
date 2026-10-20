@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/services/api_result.dart';
 import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/l10n/strings.dart';
@@ -84,8 +86,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      showMonexToast(context, e.toString(), isError: true);
     }
   }
 
@@ -119,6 +120,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final state = _questionState;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -129,7 +131,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             child: Center(
               child: Text(
                 'Skor: $_totalScore',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: MonexColors.lime,
+                ),
               ),
             ),
           ),
@@ -139,30 +143,38 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         child: _finished
             ? _buildFinished()
             : Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(
+                  MonexSpacing.screenPaddingH,
+                  MonexSpacing.screenPaddingV,
+                  MonexSpacing.screenPaddingH,
+                  24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          'Ronde $_round/${GameScreen.rounds}',
-                          style: Theme.of(context).textTheme.titleMedium,
+                        Expanded(
+                          child: Text(
+                            'Ronde $_round/${GameScreen.rounds}',
+                            style: theme.textTheme.titleMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const Spacer(),
-                        Text('Rekor: $_best',
-                            style: const TextStyle(color: Colors.grey)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Rekor: $_best',
+                          style: theme.textTheme.bodySmall,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: _round / GameScreen.rounds,
-                    ),
-                    const SizedBox(height: 16),
+                    MonexProgressBar(value: _round / GameScreen.rounds),
+                    const SizedBox(height: MonexSpacing.sectionGap),
                     if (state is ApiLoading)
                       const Expanded(
-                        child:
-                            Center(child: CircularProgressIndicator()),
+                        child: Center(child: MonexOrbitLoader(size: 56)),
                       ),
                     if (state is ApiError)
                       Expanded(
@@ -170,13 +182,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text((state as ApiError<GameQuestion>)
-                                  .message),
-                              const SizedBox(height: 8),
-                              FilledButton(
+                              Text((state as ApiError<GameQuestion>).message,
+                                  textAlign: TextAlign.center),
+                              const SizedBox(height: 12),
+                              MonexPrimaryButton(
                                 onPressed: _loadQuestion,
-                                child: const Text(
-                                    AppStrings.retryButton),
+                                label: AppStrings.retryButton,
+                                expanded: false,
                               ),
                             ],
                           ),
@@ -193,31 +205,41 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Widget _buildRound(GameQuestion q) {
     final result = _lastResult;
+    final theme = Theme.of(context);
     return ListView(
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                const Icon(Icons.help_outline,
-                    size: 48, color: Colors.amber),
-                const SizedBox(height: 12),
-                Text(q.product,
-                    style:
-                        Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center),
-                const SizedBox(height: 8),
-                Text(q.specs, textAlign: TextAlign.center),
-                const SizedBox(height: 8),
-                Text('💡 ${q.hint}',
-                    style: const TextStyle(
-                        fontStyle: FontStyle.italic)),
-              ],
-            ),
+        MonexSurfaceCard(
+          child: Column(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: MonexColors.limeMuted,
+                  borderRadius:
+                      BorderRadius.circular(MonexSpacing.radiusCard),
+                ),
+                child: const Icon(Icons.help_outline,
+                    size: 30, color: MonexColors.lime),
+              ),
+              const SizedBox(height: MonexSpacing.gridGap),
+              Text(
+                q.product,
+                style: theme.textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(q.specs, textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              Text(
+                '💡 ${q.hint}',
+                style: const TextStyle(fontStyle: FontStyle.italic),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: MonexSpacing.sectionGap),
         if (result == null) ...[
           TextField(
             controller: _guess,
@@ -228,52 +250,47 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
             onSubmitted: (_) => _submit(),
           ),
-          const SizedBox(height: 12),
-          FilledButton(
+          const SizedBox(height: MonexSpacing.gridGap),
+          MonexPrimaryButton(
             onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text(AppStrings.submitGuessButton),
+            label: AppStrings.submitGuessButton,
+            loading: _submitting,
           ),
         ] else ...[
-          Card(
+          MonexSurfaceCard(
             color: result.score >= 80
-                ? Colors.green.withValues(alpha: 0.12)
+                ? MonexColors.verdictGood.withValues(alpha: 0.12)
                 : result.score >= 50
-                    ? Colors.amber.withValues(alpha: 0.12)
-                    : Colors.red.withValues(alpha: 0.12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text('+${result.score}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .displaySmall),
-                  const SizedBox(height: 4),
-                  Text(
-                      'Harga asli: ${formatRupiah(result.actualPrice)}'),
-                  Text(
-                    result.difference == 0
-                        ? 'Tepat sekali! 🎯'
-                        : result.difference > 0
-                            ? 'Tebakanmu ${formatRupiah(result.difference)} lebih mahal'
-                            : 'Tebakanmu ${formatRupiah(-result.difference)} lebih murah',
-                  ),
-                ],
-              ),
+                    ? MonexColors.verdictFair.withValues(alpha: 0.12)
+                    : MonexColors.danger.withValues(alpha: 0.12),
+            borderColor: result.score >= 80
+                ? MonexColors.verdictGood.withValues(alpha: 0.4)
+                : result.score >= 50
+                    ? MonexColors.verdictFair.withValues(alpha: 0.4)
+                    : MonexColors.danger.withValues(alpha: 0.4),
+            child: Column(
+              children: [
+                Text('+${result.score}',
+                    style: theme.textTheme.displaySmall),
+                const SizedBox(height: 4),
+                Text('Harga asli: ${formatRupiah(result.actualPrice)}'),
+                Text(
+                  result.difference == 0
+                      ? 'Tepat sekali! 🎯'
+                      : result.difference > 0
+                          ? 'Tebakanmu ${formatRupiah(result.difference)} lebih mahal'
+                          : 'Tebakanmu ${formatRupiah(-result.difference)} lebih murah',
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          FilledButton(
+          const SizedBox(height: MonexSpacing.gridGap),
+          MonexPrimaryButton(
             onPressed: _next,
-            child: Text(_round >= GameScreen.rounds
+            label: _round >= GameScreen.rounds
                 ? AppStrings.finishButton
-                : AppStrings.nextRoundButton),
+                : AppStrings.nextRoundButton,
           ),
         ],
       ],
@@ -281,28 +298,45 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildFinished() {
+    final theme = Theme.of(context);
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(MonexSpacing.screenPaddingH),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.emoji_events,
-                size: 72, color: Colors.amber),
-            const SizedBox(height: 16),
-            Text(AppStrings.gameFinished,
-                style:
-                    Theme.of(context).textTheme.headlineSmall),
+            Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                color: MonexColors.limeMuted,
+                borderRadius:
+                    BorderRadius.circular(MonexSpacing.radiusCard),
+              ),
+              child: const Icon(Icons.emoji_events,
+                  size: 40, color: MonexColors.lime),
+            ),
+            const SizedBox(height: MonexSpacing.sectionGap),
+            Text(
+              AppStrings.gameFinished,
+              style: theme.textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
-            Text('Skor total: $_totalScore / ${GameScreen.rounds * 100}',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Skor total: $_totalScore / ${GameScreen.rounds * 100}',
+              style: theme.textTheme.titleLarge,
+            ),
             if (_newRecord)
               const Padding(
                 padding: EdgeInsets.only(top: 8),
-                child: Text(AppStrings.newRecord,
-                    style: TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold)),
+                child: Text(
+                  AppStrings.newRecord,
+                  style: TextStyle(
+                    color: MonexColors.verdictGood,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               )
             else
               Padding(
@@ -310,10 +344,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 child: Text('Rekor: $_best'),
               ),
             const SizedBox(height: 24),
-            FilledButton.icon(
+            MonexPrimaryButton(
               onPressed: _restart,
-              icon: const Icon(Icons.replay),
-              label: const Text(AppStrings.playAgainButton),
+              icon: Icons.replay_rounded,
+              label: AppStrings.playAgainButton,
+              expanded: false,
             ),
           ],
         ),

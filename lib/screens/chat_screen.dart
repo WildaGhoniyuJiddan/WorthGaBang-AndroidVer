@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/utils/rupiah.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/widgets/tilt_card.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/profile_api.dart';
@@ -96,7 +98,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Expanded(
               child: ListView.builder(
                 controller: _scroll,
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(MonexSpacing.screenPaddingH),
                 itemCount: _bubbles.length + (_sending ? 1 : 0),
                 itemBuilder: (context, i) {
                   if (i >= _bubbles.length) {
@@ -161,19 +163,25 @@ class _ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = bubble.role == 'user';
     final color = isUser
-        ? Theme.of(context).colorScheme.primaryContainer
+        ? MonexColors.limeMuted
         : Theme.of(context).colorScheme.surfaceContainerHighest;
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        margin: const EdgeInsets.only(bottom: MonexSpacing.gridGap),
+        padding: const EdgeInsets.symmetric(
+            horizontal: MonexSpacing.cardPadding, vertical: 12),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.8,
         ),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(MonexSpacing.radiusMd),
+          border: Border.all(
+            color: isUser
+                ? MonexColors.lime.withValues(alpha: 0.35)
+                : MonexColors.borderSubtle,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,11 +209,11 @@ class _BuildCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return TiltCard(
       enabled: tiltEnabled,
-      child: Card(
+      child: MonexSurfaceCard(
         margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
+        radius: MonexSpacing.radiusMd,
+        padding: const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Row(
@@ -239,27 +247,26 @@ class _BuildCard extends StatelessWidget {
                     ],
                   ),
                 ),
-              const Divider(),
+              const Divider(height: 20),
               Row(
                 mainAxisAlignment:
                     MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(AppStrings.totalLabel,
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    AppStrings.totalLabel,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   Text(formatRupiah(data.total),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold)),
+                      style: Theme.of(context).textTheme.titleSmall),
                 ],
               ),
               if (data.note != null) ...[
                 const SizedBox(height: 4),
                 Text(data.note!,
                     style: const TextStyle(
-                        fontSize: 12, color: Colors.grey)),
+                        fontSize: 11)),
               ],
             ],
-          ),
         ),
       ),
     );
@@ -275,10 +282,8 @@ class _TypingBubble extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
-        child: SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
+        child: MonexWaveLoader(
+          size: 7,
         ),
       ),
     );

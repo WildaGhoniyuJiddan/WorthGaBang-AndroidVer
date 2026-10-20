@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:worthbang/services/app_database.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/widgets/verdict_badge.dart';
 import 'package:worthbang/l10n/strings.dart';
@@ -57,16 +59,11 @@ class _HistoryListScreenState extends ConsumerState<HistoryListScreen> {
       ref.invalidate(pendingCountProvider);
       ref.invalidate(lastSyncAtProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text(AppStrings.syncHistoryDone(sent, rest))),
-      );
+      showMonexToast(context, AppStrings.syncHistoryDone(sent, rest),
+          isSuccess: true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      showMonexToast(context, e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _syncing = false);
     }
@@ -99,44 +96,51 @@ class _HistoryListScreenState extends ConsumerState<HistoryListScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: MonexOrbitLoader(size: 56))
           : _blocks.isEmpty
-              ? const Center(child: Text(AppStrings.historyEmpty))
+              ? const MonexEmptyState(
+                  icon: Icons.history_toggle_off_rounded,
+                  title: AppStrings.historyEmpty,
+                )
               : RefreshIndicator(
                   onRefresh: _reload,
                   child: ListView.builder(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.fromLTRB(
+                      MonexSpacing.screenPaddingH,
+                      MonexSpacing.screenPaddingV,
+                      MonexSpacing.screenPaddingH,
+                      24,
+                    ),
                     itemCount: _blocks.length + 1,
                     itemBuilder: (context, i) {
                       if (i == 0) return const _LastSyncHeader();
                       final b = _blocks[i - 1];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        child: Card(
-                          child: ListTile(
-                            title: Text(b.query,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis),
-                            subtitle: Text(
+                        padding: const EdgeInsets.only(
+                            bottom: MonexSpacing.gridGap),
+                        child: MonexSurfaceCard(
+                          padding: const EdgeInsets.all(
+                              MonexSpacing.cardPaddingCompact),
+                          radius: MonexSpacing.radiusMd,
+                          child: MonexTransactionTile(
+                            title: b.query,
+                            subtitle:
                               '${DateFormat('d MMM yyyy HH:mm', 'id_ID').format(b.createdAt.toLocal())}'
-                              ' \u2022 blok #${b.id}'
+                              ' • blok #${b.id}'
                               '${b.hash.isEmpty ? ' (legacy)' : ''}',
-                            ),
+                            padding: EdgeInsets.zero,
                             trailing: Column(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 VerdictBadge(
                                     verdict:
                                         verdictFromString(b.verdict)),
                                 const SizedBox(height: 4),
                                 Text(formatRupiah(b.inputPrice),
-                                    style: const TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold)),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall),
                               ],
                             ),
                             onTap: () =>
@@ -169,7 +173,7 @@ class _LastSyncHeader extends ConsumerWidget {
                 .format(lastSync.toLocal()));
     return Padding(
       padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          const EdgeInsets.only(bottom: MonexSpacing.gridGap),
       child: Row(
         children: [
           const Icon(Icons.cloud_done_outlined, size: 14),
