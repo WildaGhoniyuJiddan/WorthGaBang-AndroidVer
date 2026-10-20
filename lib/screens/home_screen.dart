@@ -10,7 +10,6 @@ import 'package:worthbang/screens/price_check_screen.dart';
 import 'package:worthbang/screens/search_screen.dart';
 import 'package:worthbang/screens/stores_screen.dart';
 import 'package:worthbang/screens/tools_screen.dart';
-import 'package:worthbang/screens/trends_screen.dart';
 import 'package:worthbang/screens/wishlist_screen.dart';
 import 'package:worthbang/widgets/app_logo.dart';
 
@@ -29,12 +28,6 @@ class HomeScreen extends StatelessWidget {
       subtitle: AppStrings.homeSearchSubtitle,
       icon: Icons.search_rounded,
       page: () => const SearchFilterScreen(),
-    ),
-    _HomeMenuItem(
-      title: AppStrings.trendTitle,
-      subtitle: AppStrings.homeTrendsSubtitle,
-      icon: Icons.show_chart_rounded,
-      page: () => const TrendsScreenContent(),
     ),
     _HomeMenuItem(
       title: AppStrings.storesTitle,

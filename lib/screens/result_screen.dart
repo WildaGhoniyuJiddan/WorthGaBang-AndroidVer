@@ -7,7 +7,6 @@ import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/widgets/verdict_badge.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/alerts_api.dart';
-import 'package:worthbang/screens/trends_screen.dart';
 import 'package:worthbang/services/wishlist_api.dart';
 import 'package:worthbang/models/price_check_models.dart';
 
@@ -142,17 +141,6 @@ class ResultScreen extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: MonexSpacing.sectionGap),
-          MonexSecondaryButton(
-            label: AppStrings.viewTrendButton,
-            icon: Icons.show_chart_rounded,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) =>
-                    TrendsScreenContent(initialQuery: r.query),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
           Row(
             children: [
               const Icon(Icons.link, size: 16),
