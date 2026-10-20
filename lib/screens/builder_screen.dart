@@ -11,10 +11,13 @@ import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/profile_api.dart';
 import 'package:worthbang/services/builder_api.dart';
 import 'package:worthbang/models/builder_models.dart';
+import 'package:worthbang/services/wglb.dart';
+import 'package:worthbang/widgets/pc_3d_stage.dart';
 
 /// Layar Random Builder: rakit PC acak sesuai budget.
 /// Goyangkan HP (shake) untuk mengacak ulang — kartu hasil miring
-/// mengikuti gyroscope (TiltCard).
+/// mengikuti gyroscope (TiltCard). Panggung 3D menampilkan rakitan hasil
+/// shake sebagai visual enhancement, tanpa menggantikan data aslinya.
 class BuilderScreen extends ConsumerStatefulWidget {
   const BuilderScreen({super.key});
 
@@ -28,6 +31,12 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
   ApiResult<RandomBuild>? _state;
   late final ShakeDetector _shake;
 
+  /// Part 3D yang sedang dipanggungkan (hasil mapping dari build terakhir).
+  List<WglbVariant> _stageParts = const [];
+
+  /// Katalog varian 3D; null = katalog belum termuat.
+  WglbCatalog? _catalog;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +47,7 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
         showMonexToast(context, AppStrings.shakeDetected, isSuccess: true);
       }
     });
+    _loadCatalog();
   }
 
   @override
@@ -46,6 +56,43 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
     _budget.dispose();
     super.dispose();
   }
+
+  Future<void> _loadCatalog() async {
+    try {
+      final catalog = await WglbCatalog.load();
+      if (!mounted) return;
+      setState(() => _catalog = catalog);
+    } catch (_) {
+      // Katalog 3D opsional: tanpa katalog, panggung 3D menampilkan fallback.
+    }
+  }
+
+  /// Memetakan komponen hasil build ke varian 3D yang tersedia.
+  ///
+  /// Varian dipilih acak per role, sehingga shake berikutnya mengubah
+  /// tampilan model tanpa mengubah data build.
+  List<WglbVariant> _pickStageParts(RandomBuild build) {
+    final catalog = _catalog;
+    if (catalog == null || catalog.isEmpty) return const [];
+    final picks = <WglbVariant>[];
+    void take(String role) {
+      final variants = catalog.of(role);
+      if (variants.isEmpty) return;
+      picks.add(variants[_randomIndex(variants.length)]);
+    }
+
+    take('case');
+    take('mobo');
+    take('cpu');
+    take('ram');
+    take('gpu');
+    take('psu');
+    take('fan');
+    return picks;
+  }
+
+  static int _randomIndex(int length) =>
+      DateTime.now().microsecondsSinceEpoch % length;
 
   Future<void> _build() async {
     final budget =
@@ -56,8 +103,13 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
       final build = await ref
           .read(builderApiProvider)
           .randomBuild(budget: budget, useCase: _useCase);
-      setState(() => _state = ApiSuccess(build));
+      if (!mounted) return;
+      setState(() {
+        _state = ApiSuccess(build);
+        _stageParts = _pickStageParts(build);
+      });
     } catch (e) {
+      if (!mounted) return;
       final msg = e is BuilderException
           ? e.message
           : e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
@@ -88,7 +140,6 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
               decoration: const InputDecoration(
                 labelText: AppStrings.budgetLabel,
                 prefixText: 'Rp ',
-                prefixIcon: Icon(Icons.account_balance_wallet_outlined),
               ),
             ),
             const SizedBox(height: MonexSpacing.gridGap),
@@ -126,6 +177,16 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 16),
+            // Panggung 3D: visual enhancement, tidak menggantikan daftar
+            // komponen di bawah.
+            Pc3DStage(
+              parts: _stageParts,
+              loading: state is ApiLoading,
+              label: build == null
+                  ? null
+                  : '${AppStrings.builderTitle} • ${formatRupiah(build.total)}',
             ),
             const SizedBox(height: 16),
             if (state is ApiLoading)

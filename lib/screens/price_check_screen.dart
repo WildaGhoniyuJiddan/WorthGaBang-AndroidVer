@@ -256,7 +256,6 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                   decoration: const InputDecoration(
                     labelText: AppStrings.priceLabel,
                     prefixText: 'Rp ',
-                    prefixIcon: Icon(Icons.payments_outlined),
                   ),
                   validator: (v) => _parsePrice(v ?? '') == null
                       ? AppStrings.priceInvalid
@@ -265,6 +264,9 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                 const SizedBox(height: MonexSpacing.sectionGap),
                 DropdownButtonFormField<String>(
                   initialValue: _condition,
+                  // isExpanded: teks item diberi ruang lentur, jadi label
+                  // panjang tidak memaksa Row melebar di layar 320 px.
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: AppStrings.conditionLabel,
                     prefixIcon: Icon(Icons.sell_outlined),

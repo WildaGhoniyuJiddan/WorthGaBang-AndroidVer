@@ -15,3 +15,17 @@ build/
 .idea/
 *.iml
 .DS_Store
+
+# Node (pipeline aset 3D offline)
+tool/node_modules/
+
+# Kotlin/Gradle cache
+android/.kotlin/
+
+# Aset 3D mentah BuildCores (±180 MB, Draco).
+# Pipeline offline (tool/prepare_3d.mjs) menghasilkan assets/3d/prepared/
+# yang memang ikut repo. Raw_GLB tidak pernah dibundel ke APK.
+# Sumber: https://www.buildcores.com — unduh manual ke assets/3d/ lalu
+# jalankan: node tool/prepare_3d.mjs
+assets/3d/*
+!assets/3d/prepared/
