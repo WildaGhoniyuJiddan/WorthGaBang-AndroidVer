@@ -1,4 +1,13 @@
-/// Model random builder (lokal, dari katalog bundled).
+/// Exception saat kalkulasi rakit PC (misal budget terlalu kecil).
+class BuilderException implements Exception {
+  const BuilderException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class BuildComponent {
   const BuildComponent({required this.name, required this.price});
 

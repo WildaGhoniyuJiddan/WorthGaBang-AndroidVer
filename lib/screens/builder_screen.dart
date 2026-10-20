@@ -61,7 +61,10 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
           .randomBuild(budget: budget, useCase: _useCase);
       setState(() => _state = ApiSuccess(build));
     } catch (e) {
-      setState(() => _state = ApiError(e.toString()));
+      final msg = e is BuilderException
+          ? e.message
+          : e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+      setState(() => _state = ApiError(msg));
     }
   }
 
@@ -118,10 +121,31 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
             if (state is ApiLoading)
               const Center(child: CircularProgressIndicator()),
             if (state is ApiError)
-              Text(
-                (state as ApiError<RandomBuild>).message,
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.error),
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        (state as ApiError<RandomBuild>).message,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             if (build != null) ...[
               for (final (label, part) in build.parts)

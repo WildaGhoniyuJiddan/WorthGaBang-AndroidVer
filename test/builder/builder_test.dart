@@ -51,6 +51,42 @@ void main() {
         }
       },
     );
+
+    test('budget 1 juta tidak melebihi nominal 1 juta (fix issue)', () async {
+      final api = BuilderApi();
+      final build = await api.randomBuild(budget: 1000000, useCase: 'gaming');
+      expect(build.budget, 1000000);
+      expect(build.total, lessThanOrEqualTo(1000000));
+      expect(build.gpu.price, lessThan(1000000));
+      expect(build.cpu.price, lessThan(1000000));
+      expect(build.ram.price, lessThan(1000000));
+      expect(build.ssd.price, lessThan(1000000));
+      expect(build.psu.price, lessThan(1000000));
+      expect(
+        build.total,
+        equals(build.cpu.price +
+            build.gpu.price +
+            build.ram.price +
+            build.ssd.price +
+            build.psu.price),
+      );
+    });
+
+    test('budget 1 juta untuk semua use case <= 1 juta', () async {
+      final api = BuilderApi();
+      for (final uc in ['gaming', 'office', 'editing']) {
+        final build = await api.randomBuild(budget: 1000000, useCase: uc);
+        expect(build.total, lessThanOrEqualTo(1000000), reason: 'Failed for $uc');
+      }
+    });
+
+    test('budget terlalu kecil melempar BuilderException', () async {
+      final api = BuilderApi();
+      expect(
+        () => api.randomBuild(budget: 500000, useCase: 'gaming'),
+        throwsA(isA<BuilderException>()),
+      );
+    });
   });
 
   group('ShakeDetector', () {
