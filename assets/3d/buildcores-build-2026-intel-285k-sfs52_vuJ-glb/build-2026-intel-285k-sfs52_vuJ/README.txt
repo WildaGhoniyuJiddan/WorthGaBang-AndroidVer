@@ -1,0 +1,21 @@
+# 2026 Intel 285k — share sfs52_vuJ (completed build BuildCores)
+
+- 67313ca98210dfc03eb2efe2_low.glb | CaseFan | Corsair RS120 120mm White ARGB PWM 3-Pack
+- 6936d544afc2a13324c9d670_low.glb | CaseFan | Lian Li UNI FAN TL LCD ARGB 120mm White  PWM Pack of 3
+- 69bcf7ef982b75221687e229_low.glb | CaseFan | Lian Li UNI FAN TL LCD Wireless 120mm White ARGB PWM 3-Pack
+- 67cba673e8d3aa2721ef2706_low.glb | CaseFan | Thermalright TL-C12CW-S 120mm White ARGB PWM
+- 6a30d19f57a934baca677ec8_low.glb | Chair | CORSAIR TC100 RELAXED Gaming Chair - Fabric Grey/Black
+- 6a1722bfaa36c4afd457c772_low.glb | Desk | Platform:4 Desk Black
+- 691ea5a7c76b443a93a08604_low.glb | GPU | ASUS PRIME GeForce RTX 5060 Ti 16GB GDDR7 OC DDR7
+- 6a30d31b82eef255169605e3_low.glb | Laptop | Dell 16S Laptop (DS16260)
+- 6a3b543799fd72e7fd4565c6_low.glb | Lighting | Logitech - Litra Beam Premium LED Streaming Key Light with TrueSoft and Brightness/Color Temperature Settings - Black
+- 65482c80477e815da41f25ff_low.glb | PCCase | Lian Li O11D XL-W ATX Full Tower White / Black Tempered Glass
+- 67b669bee8135f6fdee9c3cf_low.glb | RAM | G.Skill Ripjaws M5 RGB Black DDR5-5200 CL40 96GB (2x48GB)
+- 6a30d32a82eef2551696097e_controller_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [controller]
+- 6a30d32a82eef2551696097e_remote_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [remote]
+- 6a30d32a82eef2551696097e_speaker-1_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [speaker-1]
+- 6a30d32a82eef2551696097e_speaker-2_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [speaker-2]
+- 6a30d32a82eef2551696097e_speaker-3_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [speaker-3]
+- 6a30d32a82eef2551696097e_speaker-4_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [speaker-4]
+- 6a30d32a82eef2551696097e_speaker-5_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [speaker-5]
+- 6a30d32a82eef2551696097e_subwoofer_low.glb | Speaker | Logitech Z906 5.1 Surround Sound Speaker System [subwoofer]
