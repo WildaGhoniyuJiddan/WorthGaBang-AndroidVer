@@ -565,6 +565,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.5"
+  glbview:
+    dependency: "direct main"
+    description:
+      name: glbview
+      sha256: "3e43e6a211d6cda9ed6a03a067126439905c1c0078b2dad5642551d3050672d8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.3"
   glob:
     dependency: transitive
     description:

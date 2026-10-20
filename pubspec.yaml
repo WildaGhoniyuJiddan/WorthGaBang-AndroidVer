@@ -53,6 +53,7 @@ dependencies:
   path: ^1.9.1
   shared_preferences: ^2.5.3
   connectivity_plus: ^7.3.1
+  glbview: ^0.3.3
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +91,7 @@ flutter:
     - assets/data/retail_catalog.json
     - assets/data/stores_jakarta.csv
     - backend/app/data/stores_yogyakarta.csv
+    - assets/3d/prepared/
   #   - images/a_dot_ham.jpeg
 
   # Design system "Monex" (DESIGN(reset).MD) — Plus Jakarta Sans bundled
