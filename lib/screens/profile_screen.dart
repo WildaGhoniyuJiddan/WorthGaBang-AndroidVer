@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:worthbang/providers/providers.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/services/auth_repository.dart';
 import 'package:worthbang/providers/auth_controller.dart';
@@ -77,14 +79,11 @@ class _ProfileContentScreenState
       ref.read(authControllerProvider.notifier).setUser(user);
       if (mounted) {
         setState(() => _localPhotoPath = xfile.path);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.photoUpdated)),
-        );
+        showMonexToast(context, AppStrings.photoUpdated, isSuccess: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+        showMonexToast(context, e.toString(), isError: true);
       }
     }
   }
@@ -121,8 +120,7 @@ class _ProfileContentScreenState
       ref.read(authControllerProvider.notifier).setUser(user);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+        showMonexToast(context, e.toString(), isError: true);
       }
     }
   }
@@ -141,13 +139,10 @@ class _ProfileContentScreenState
       if (!mounted) return;
       _kesan.clear();
       _saran.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.feedbackSent)),
-      );
+      showMonexToast(context, AppStrings.feedbackSent, isSuccess: true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+        showMonexToast(context, e.toString(), isError: true);
       }
     } finally {
       if (mounted) setState(() => _sendingFeedback = false);
@@ -194,7 +189,12 @@ class _ProfileContentScreenState
       appBar: AppBar(title: const Text(AppStrings.profileScreenTitle)),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           children: [
             Center(
               child: Column(
@@ -221,14 +221,15 @@ class _ProfileContentScreenState
                           right: 0,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
+                              color: MonexColors.lime,
                               shape: BoxShape.circle,
                             ),
                             padding: const EdgeInsets.all(6),
-                            child: const Icon(Icons.camera_alt,
-                                size: 16),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: MonexColors.textDark,
+                            ),
                           ),
                         ),
                       ],
@@ -250,8 +251,7 @@ class _ProfileContentScreenState
                     ],
                   ),
                   Text(user?.email ?? '',
-                      style:
-                          const TextStyle(color: Colors.grey)),
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
             ),
@@ -283,22 +283,33 @@ class _ProfileContentScreenState
             ),
             ListTile(
               title: const Text(AppStrings.themeSetting),
-              trailing: SegmentedButton<ThemeMode>(
-                segments: const [
-                  ButtonSegment(
+              // Lebar tetap: ListTile memberi trailing constraint tak
+              // terbatas, sedangkan segmented control memakai Expanded.
+              trailing: SizedBox(
+                width: 156,
+                child: MonexSegmentedControl<ThemeMode>(
+                  value: settings.themeMode,
+                  onChanged: (v) => ref
+                      .read(settingsControllerProvider.notifier)
+                      .setThemeMode(v),
+                  items: const [
+                    MonexSegment(
                       value: ThemeMode.system,
-                      icon: Icon(Icons.settings_suggest_outlined)),
-                  ButtonSegment(
+                      label: '',
+                      icon: Icons.settings_suggest_outlined,
+                    ),
+                    MonexSegment(
                       value: ThemeMode.light,
-                      icon: Icon(Icons.light_mode_outlined)),
-                  ButtonSegment(
+                      label: '',
+                      icon: Icons.light_mode_outlined,
+                    ),
+                    MonexSegment(
                       value: ThemeMode.dark,
-                      icon: Icon(Icons.dark_mode_outlined)),
-                ],
-                selected: {settings.themeMode},
-                onSelectionChanged: (s) => ref
-                    .read(settingsControllerProvider.notifier)
-                    .setThemeMode(s.first),
+                      label: '',
+                      icon: Icons.dark_mode_outlined,
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -311,7 +322,7 @@ class _ProfileContentScreenState
                 (i) => IconButton(
                   icon: Icon(
                     i < _rating ? Icons.star : Icons.star_border,
-                    color: Colors.amber,
+                    color: MonexColors.verdictFair,
                   ),
                   onPressed: () =>
                       setState(() => _rating = i + 1),
@@ -336,12 +347,12 @@ class _ProfileContentScreenState
               maxLines: 2,
             ),
             const SizedBox(height: 8),
-            FilledButton.icon(
+            MonexPrimaryButton(
               onPressed:
                   _sendingFeedback ? null : _sendFeedback,
-              icon: const Icon(Icons.send_outlined),
-              label:
-                  const Text(AppStrings.sendFeedbackButton),
+              icon: Icons.send_outlined,
+              label: AppStrings.sendFeedbackButton,
+              loading: _sendingFeedback,
             ),
             const SizedBox(height: 8),
             Consumer(
@@ -361,10 +372,10 @@ class _ProfileContentScreenState
                       ref.invalidate(pendingCountProvider);
                       ref.invalidate(lastSyncAtProvider);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  '${AppStrings.syncDone}: $rest')),
+                        showMonexToast(
+                          context,
+                          '${AppStrings.syncDone}: $rest',
+                          isSuccess: true,
                         );
                       }
                     },
@@ -376,15 +387,10 @@ class _ProfileContentScreenState
               },
             ),
             const SizedBox(height: 24),
-            OutlinedButton.icon(
+            MonexSecondaryButton(
               onPressed: _logout,
-              icon: const Icon(Icons.logout),
-              label:
-                  const Text(AppStrings.logoutButton),
-              style: OutlinedButton.styleFrom(
-                foregroundColor:
-                    Theme.of(context).colorScheme.error,
-              ),
+              icon: Icons.logout_rounded,
+              label: AppStrings.logoutButton,
             ),
           ],
         ),

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/providers/providers.dart';
 import 'package:worthbang/services/api_result.dart';
 import 'package:worthbang/l10n/strings.dart';
@@ -178,33 +180,39 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
               ),
             ],
           ),
+          const SizedBox(width: 12),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(
+                MonexSegmentedControl<String>(
+                  value: _mode,
+                  onChanged: (v) => setState(() => _mode = v),
+                  items: const [
+                    MonexSegment(
                       value: 'pc',
-                      label: Text('Komponen PC'),
-                      icon: Icon(Icons.memory_outlined),
+                      label: 'Komponen PC',
+                      icon: Icons.memory_outlined,
                     ),
-                    ButtonSegment(
+                    MonexSegment(
                       value: 'laptop',
-                      label: Text('Laptop'),
-                      icon: Icon(Icons.laptop_outlined),
+                      label: 'Laptop',
+                      icon: Icons.laptop_outlined,
                     ),
                   ],
-                  selected: {_mode},
-                  onSelectionChanged: (s) => setState(() => _mode = s.first),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: MonexSpacing.sectionGap),
                 TextFormField(
                   controller: _query,
                   onChanged: _onQueryChanged,
@@ -217,17 +225,21 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                       ? AppStrings.queryMin
                       : null,
                 ),
-                if (_suggestions.isNotEmpty)
-                  Card(
-                    margin: const EdgeInsets.only(top: 4),
+                if (_suggestions.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  MonexSurfaceCard(
+                    padding: EdgeInsets.zero,
+                    radius: MonexSpacing.radiusMd,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         for (final s in _suggestions)
-                          ListTile(
-                            dense: true,
-                            leading: const Icon(Icons.history, size: 18),
-                            title: Text(s),
+                          MonexTransactionTile(
+                            title: s,
+                            leadingIcon: Icons.history,
+                            leadingBackground:
+                                theme.colorScheme.surfaceContainerHighest,
+                            leadingColor: theme.textTheme.bodySmall!.color,
                             onTap: () {
                               _query.text = s;
                               setState(() => _suggestions = []);
@@ -236,7 +248,8 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                       ],
                     ),
                   ),
-                const SizedBox(height: 16),
+                ],
+                const SizedBox(height: MonexSpacing.sectionGap),
                 TextFormField(
                   controller: _price,
                   keyboardType: TextInputType.number,
@@ -249,7 +262,7 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                       ? AppStrings.priceInvalid
                       : null,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: MonexSpacing.sectionGap),
                 DropdownButtonFormField<String>(
                   initialValue: _condition,
                   decoration: const InputDecoration(
@@ -264,17 +277,12 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                   ],
                   onChanged: (v) => setState(() => _condition = v ?? 'any'),
                 ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
+                const SizedBox(height: MonexSpacing.sectionGap + 6),
+                MonexPrimaryButton(
+                  label: AppStrings.checkButton,
+                  icon: Icons.analytics_outlined,
+                  loading: isLoading,
                   onPressed: isLoading ? null : _submit,
-                  icon: isLoading
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.analytics_outlined),
-                  label: const Text(AppStrings.checkButton),
                 ),
                 if (errorMessage != null) ...[
                   const SizedBox(height: 12),
@@ -283,14 +291,14 @@ class _PriceCheckScreenState extends ConsumerState<PriceCheckScreen> {
                     style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ],
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
+                const SizedBox(height: 10),
+                MonexSecondaryButton(
+                  label: AppStrings.bundleModeButton,
+                  icon: Icons.inventory_2_outlined,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
                         builder: (_) => const BundleScreen()),
                   ),
-                  icon: const Icon(Icons.inventory_2_outlined),
-                  label: const Text(AppStrings.bundleModeButton),
                 ),
               ],
             ),

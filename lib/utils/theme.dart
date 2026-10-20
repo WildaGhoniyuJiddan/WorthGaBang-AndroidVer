@@ -1,42 +1,28 @@
 import 'package:flutter/material.dart';
 
-/// Tema aplikasi WorthBang: light & dark.
+import 'package:worthbang/core/theme/monex_theme.dart';
+
+/// Tema aplikasi WorthBang — sekarang memakai design system "Monex"
+/// (`DESIGN(reset).MD`).
+///
+/// API lama dipertahankan supaya seluruh call site tetap jalan; token
+/// aslinya pindah ke [MonexColors].
 ///
 /// Aturan aksesibilitas: warna verdict (hijau/amber/merah) TIDAK PERNAH
-/// berdiri sendiri — selalu disertai label teks (lihat [VerdictBadge]).
+/// berdiri sendiri — selalu disertai label teks (lihat `VerdictBadge`).
 abstract final class AppTheme {
   /// Hijau — harga "worth it" / sangat murah.
-  static const Color verdictGood = Color(0xFF2E7D32);
+  static const Color verdictGood = MonexColors.verdictGood;
 
   /// Amber — harga wajar.
-  static const Color verdictFair = Color(0xFFF9A825);
+  static const Color verdictFair = MonexColors.verdictFair;
 
   /// Merah — kemahalan.
-  static const Color verdictBad = Color(0xFFC62828);
+  static const Color verdictBad = MonexColors.verdictBad;
 
-  static const _seed = Color(0xFF1B5E20);
+  static ThemeData get light => MonexTheme.lightTheme;
 
-  static ThemeData get light => ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: _seed,
-          brightness: Brightness.light,
-        ),
-        navigationBarTheme: const NavigationBarThemeData(
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        ),
-      );
-
-  static ThemeData get dark => ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: _seed,
-          brightness: Brightness.dark,
-        ),
-        navigationBarTheme: const NavigationBarThemeData(
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        ),
-      );
+  static ThemeData get dark => MonexTheme.darkTheme;
 
   /// Warna verdict sesuai skor 0–100 (diselaraskan dengan backend scoring).
   static Color verdictColorFor(double score) {

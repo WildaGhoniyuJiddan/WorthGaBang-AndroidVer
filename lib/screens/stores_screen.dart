@@ -7,6 +7,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:worthbang/services/api_result.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/models/store_models.dart';
 import 'package:worthbang/services/stores_api.dart';
@@ -131,10 +133,10 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
   Future<void> _openLocationSettings() async {
     final opened = await Geolocator.openAppSettings();
     if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pengaturan aplikasi tidak dapat dibuka.'),
-        ),
+      showMonexToast(
+        context,
+        'Pengaturan aplikasi tidak dapat dibuka.',
+        isError: true,
       );
     }
   }
@@ -183,9 +185,11 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  FilledButton(
+                  MonexPrimaryButton(
                     onPressed: state is ApiLoading ? null : _load,
-                    child: const Text(AppStrings.refreshLabel),
+                    label: AppStrings.refreshLabel,
+                    expanded: false,
+                    loading: state is ApiLoading,
                   ),
                 ],
               ),
@@ -255,11 +259,9 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                               child: GestureDetector(
                                 onTap: () {
                                   _mapController.move(LatLng(s.lat, s.lng), 15);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('${s.name}\n${s.address}'),
-                                      duration: const Duration(seconds: 2),
-                                    ),
+                                  showMonexToast(
+                                    context,
+                                    '${s.name}\n${s.address}',
                                   );
                                 },
                                 child: const Icon(
@@ -301,7 +303,7 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
             Expanded(
               child: switch (state) {
                 ApiLoading() => const Center(
-                  child: CircularProgressIndicator(),
+                  child: MonexOrbitLoader(size: 56),
                 ),
                 ApiError<List<Store>> e => Center(
                   child: Padding(
@@ -316,44 +318,38 @@ class _StoresScreenState extends ConsumerState<StoresScreen> {
                 ),
                 _ =>
                   filteredStores.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              q.isEmpty
-                                  ? AppStrings.storesEmpty
-                                  : 'Tidak ada toko yang cocok dengan "$q".',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ),
+                      ? MonexEmptyState(
+                          icon: Icons.store_mall_directory_outlined,
+                          title: q.isEmpty
+                              ? AppStrings.storesEmpty
+                              : 'Tidak ada toko yang cocok dengan "$q".',
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(
+                              MonexSpacing.screenPaddingH),
                           itemCount: filteredStores.length,
                           itemBuilder: (context, i) {
                             final s = filteredStores[i];
-                            return Card(
-                              child: ListTile(
-                                leading: const Icon(Icons.store),
-                                title: Text(
-                                  s.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                  bottom: MonexSpacing.gridGap),
+                              child: MonexSurfaceCard(
+                                padding: const EdgeInsets.all(
+                                    MonexSpacing.cardPaddingCompact),
+                                radius: MonexSpacing.radiusMd,
+                                child: MonexTransactionTile(
+                                  leadingIcon: Icons.storefront_outlined,
+                                  title: s.name,
+                                  titleStyle:
+                                      Theme.of(context).textTheme.titleSmall,
+                                  subtitle:
+                                      '${s.address}\n${s.distanceKm.toStringAsFixed(1)} km',
+                                  padding: EdgeInsets.zero,
+                                  onTap: () {
+                                    _mapController.move(
+                                        LatLng(s.lat, s.lng), 15);
+                                  },
                                 ),
-                                subtitle: Text(
-                                  '${s.address}\n${s.distanceKm.toStringAsFixed(1)} km',
-                                ),
-                                isThreeLine: true,
-                                trailing: const Icon(
-                                  Icons.my_location,
-                                  size: 20,
-                                  color: Colors.grey,
-                                ),
-                                onTap: () {
-                                  _mapController.move(LatLng(s.lat, s.lng), 15);
-                                },
                               ),
                             );
                           },

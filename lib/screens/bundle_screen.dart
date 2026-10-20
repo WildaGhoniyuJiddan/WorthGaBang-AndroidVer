@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/utils/rupiah.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/widgets/verdict_badge.dart';
 import 'package:worthbang/l10n/strings.dart';
 import 'package:worthbang/models/bundle_models.dart';
@@ -85,7 +87,12 @@ class _BundleScreenState extends ConsumerState<BundleScreen> {
       appBar: AppBar(title: const Text(AppStrings.bundleTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -131,17 +138,12 @@ class _BundleScreenState extends ConsumerState<BundleScreen> {
                   'Total komponen: ${formatRupiah(_runningTotal)}',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
+                const SizedBox(height: MonexSpacing.sectionGap),
+                MonexPrimaryButton(
                   onPressed: _loading ? null : _submit,
-                  icon: const Icon(Icons.analytics_outlined),
-                  label: _loading
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text(AppStrings.checkButton),
+                  icon: Icons.analytics_outlined,
+                  label: AppStrings.checkButton,
+                  loading: _loading,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
@@ -150,61 +152,93 @@ class _BundleScreenState extends ConsumerState<BundleScreen> {
                           color: Theme.of(context).colorScheme.error)),
                 ],
                 if (result != null) ...[
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      VerdictBadge(
-                          verdict: verdictFromString(result.verdict)),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Skor ${result.score.toStringAsFixed(0)}/100',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                      'Harga paket: ${formatRupiah(result.bundlePrice)}'),
-                  if (result.referenceTotal != null)
-                    Text(
-                        'Total referensi: ${formatRupiah(result.referenceTotal!)}'),
-                  if (result.savingsPercent != null)
-                    Text(
-                      'Hemat: ${result.savingsPercent!.toStringAsFixed(1)}%',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(height: MonexSpacing.sectionGap),
+                  MonexSurfaceCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: VerdictBadge(
+                                  verdict: verdictFromString(result.verdict)),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Skor ${result.score.toStringAsFixed(0)}/100',
+                              style:
+                                  Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: MonexSpacing.gridGap),
+                        MonexProgressBar(value: result.score / 100),
+                        const SizedBox(height: MonexSpacing.gridGap),
+                        Text(
+                            'Harga paket: ${formatRupiah(result.bundlePrice)}',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        if (result.referenceTotal != null)
+                          Text(
+                              'Total referensi: ${formatRupiah(result.referenceTotal!)}',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                        if (result.savingsPercent != null)
+                          Text(
+                            'Hemat: ${result.savingsPercent!.toStringAsFixed(1)}%',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: MonexColors.verdictGood,
+                                ),
+                          ),
+                      ],
                     ),
+                  ),
                   if (result.recommendation != null) ...[
-                    const SizedBox(height: 8),
-                    Text(result.recommendation!),
+                    const SizedBox(height: MonexSpacing.gridGap),
+                    MonexSurfaceCard(
+                      color: MonexColors.limeMuted,
+                      borderColor:
+                          MonexColors.lime.withValues(alpha: 0.35),
+                      radius: MonexSpacing.radiusMd,
+                      padding: const EdgeInsets.all(
+                          MonexSpacing.cardPaddingCompact),
+                      child: Text(
+                        result.recommendation!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
                   ],
                   if (result.items.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: MonexSpacing.sectionGap),
                     Text('Per komponen',
                         style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: MonexSpacing.gridGap),
                     for (final item in result.items)
-                      Card(
-                        child: ListTile(
-                          title: Text(item.query),
-                          subtitle: item.verdict != null
-                              ? Text(item.verdict!)
-                              : null,
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(formatRupiah(item.price),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              if (item.referencePrice != null)
-                                Text(
-                                  'ref: ${formatRupiah(item.referencePrice!)}',
-                                  style:
-                                      Theme.of(context).textTheme.bodySmall,
-                                ),
-                            ],
+                      Padding(
+                        padding:
+                            const EdgeInsets.only(bottom: MonexSpacing.gridGap),
+                        child: MonexSurfaceCard(
+                          padding: const EdgeInsets.all(
+                              MonexSpacing.cardPaddingCompact),
+                          radius: MonexSpacing.radiusMd,
+                          child: MonexTransactionTile(
+                            title: item.query,
+                            subtitle: item.verdict,
+                            padding: EdgeInsets.zero,
+                            trailing: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(formatRupiah(item.price),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall),
+                                if (item.referencePrice != null)
+                                  Text(
+                                    'ref: ${formatRupiah(item.referencePrice!)}',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -274,10 +308,13 @@ class _ItemRow extends StatelessWidget {
             ),
           ),
           if (canRemove)
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              onPressed: onRemove,
-            ),
+          Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: IconButton(
+          icon: const Icon(Icons.remove_circle_outline),
+          onPressed: onRemove,
+          ),
+          ),
         ],
       ),
     );

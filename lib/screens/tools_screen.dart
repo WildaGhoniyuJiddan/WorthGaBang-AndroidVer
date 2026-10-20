@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:worthbang/l10n/strings.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/services/currency_api.dart';
 
 /// Layar Konverter: mata uang (kurs server) + zona waktu WIB/WITA/WIT/UTC.
@@ -90,13 +92,18 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
       appBar: AppBar(title: const Text(AppStrings.toolsTitle)),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           children: [
             Text(AppStrings.currencySection,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             if (_loadingRates)
-              const Center(child: CircularProgressIndicator())
+              const Center(child: MonexOrbitLoader(size: 56))
             else if (_ratesError != null)
               Text(_ratesError!,
                   style: TextStyle(
@@ -133,16 +140,16 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
+              MonexSurfaceCard(
+                padding:
+                    const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+                radius: MonexSpacing.radiusMd,
+                child: Text(
                     converted != null
                         ? 'Rp ${amount.toStringAsFixed(0)} = '
                             '${converted.toStringAsFixed(2)} $_target'
                         : '-',
                     style: Theme.of(context).textTheme.titleMedium,
-                  ),
                 ),
               ),
               if (_rates!.updatedAt != null)
@@ -159,10 +166,10 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: MonexSecondaryButton(
                     onPressed: _pickTime,
-                    icon: const Icon(Icons.schedule),
-                    label: Text(fmt.format(_picked)),
+                    icon: Icons.schedule_rounded,
+                    label: fmt.format(_picked),
                   ),
                 ),
               ],
@@ -202,14 +209,14 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
+            MonexSurfaceCard(
+              padding:
+                  const EdgeInsets.all(MonexSpacing.cardPaddingCompact),
+              radius: MonexSpacing.radiusMd,
+              child: Text(
                   '${fmt.format(_picked)} ${_from.label} = '
                   '${fmt.format(convertedTime)} ${_to.label}',
                   style: Theme.of(context).textTheme.titleMedium,
-                ),
               ),
             ),
           ],

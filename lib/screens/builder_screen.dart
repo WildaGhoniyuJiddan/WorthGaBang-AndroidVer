@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:worthbang/services/api_result.dart';
+import 'package:worthbang/core/theme/monex_theme.dart';
+import 'package:worthbang/core/widgets/monex_widgets.dart';
 import 'package:worthbang/services/shake_detector.dart';
 import 'package:worthbang/utils/rupiah.dart';
 import 'package:worthbang/widgets/tilt_card.dart';
@@ -33,12 +35,7 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
     _shake.start(() {
       if (mounted) {
         _build();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(AppStrings.shakeDetected),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        showMonexToast(context, AppStrings.shakeDetected, isSuccess: true);
       }
     });
   }
@@ -78,7 +75,12 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
       appBar: AppBar(title: const Text(AppStrings.builderTitle)),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(
+            MonexSpacing.screenPaddingH,
+            MonexSpacing.screenPaddingV,
+            MonexSpacing.screenPaddingH,
+            24,
+          ),
           children: [
             TextField(
               controller: _budget,
@@ -89,22 +91,22 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
                 prefixIcon: Icon(Icons.account_balance_wallet_outlined),
               ),
             ),
-            const SizedBox(height: 12),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'gaming', label: Text('Gaming')),
-                ButtonSegment(value: 'office', label: Text('Kantor')),
-                ButtonSegment(value: 'editing', label: Text('Editing')),
+            const SizedBox(height: MonexSpacing.gridGap),
+            MonexSegmentedControl<String>(
+              value: _useCase,
+              onChanged: (v) => setState(() => _useCase = v),
+              items: const [
+                MonexSegment(value: 'gaming', label: 'Gaming'),
+                MonexSegment(value: 'office', label: 'Kantor'),
+                MonexSegment(value: 'editing', label: 'Editing'),
               ],
-              selected: {_useCase},
-              onSelectionChanged: (s) =>
-                  setState(() => _useCase = s.first),
             ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
+            const SizedBox(height: MonexSpacing.gridGap),
+            MonexPrimaryButton(
               onPressed: state is ApiLoading ? null : _build,
-              icon: const Icon(Icons.casino_outlined),
-              label: const Text(AppStrings.randomBuildButton),
+              icon: Icons.casino_outlined,
+              label: AppStrings.randomBuildButton,
+              loading: state is ApiLoading,
             ),
             const Padding(
               padding: EdgeInsets.only(top: 8),
@@ -113,38 +115,48 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
                 children: [
                   Icon(Icons.vibration, size: 16),
                   SizedBox(width: 4),
-                  Text(AppStrings.shakeHint),
+                  // Flexible: teks hint boleh wrap, tidak memaksa Row melebar.
+                  Flexible(
+                    child: Text(
+                      AppStrings.shakeHint,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
             if (state is ApiLoading)
-              const Center(child: CircularProgressIndicator()),
+              const Center(child: MonexOrbitLoader(size: 56)),
             if (state is ApiError)
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        (state as ApiError<RandomBuild>).message,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onErrorContainer,
-                          fontWeight: FontWeight.w500,
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: MonexSurfaceCard(
+                  color: MonexColors.dangerMuted,
+                  borderColor: MonexColors.danger.withValues(alpha: 0.4),
+                  radius: MonexSpacing.radiusMd,
+                  padding: const EdgeInsets.all(
+                      MonexSpacing.cardPaddingCompact),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: MonexColors.danger,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          (state as ApiError<RandomBuild>).message,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             if (build != null) ...[
@@ -156,38 +168,46 @@ class _BuilderScreenState extends ConsumerState<BuilderScreen> {
                         .watch(settingsControllerProvider)
                         .orDefault
                         .tiltEnabled,
-                    child: Card(
-                      child: ListTile(
-                        leading: CircleAvatar(child: Text(label[0])),
-                        title: Text(part.name),
-                        subtitle: Text(label),
+                    child: MonexSurfaceCard(
+                      padding: const EdgeInsets.all(
+                          MonexSpacing.cardPaddingCompact),
+                      radius: MonexSpacing.radiusMd,
+                      child: MonexTransactionTile(
+                        title: part.name,
+                        subtitle: label,
+                        padding: EdgeInsets.zero,
+                        leadingIcon: Icons.memory_rounded,
                         trailing: Text(
                           formatRupiah(part.price),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
                       ),
                     ),
                   ),
                 ),
-              Card(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(AppStrings.totalLabel,
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text(
+              MonexGradientCard(
+                padding: const EdgeInsets.all(MonexSpacing.cardPadding),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppStrings.totalLabel,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: MonexColors.textDark,
+                          ),
+                    ),
+                    Flexible(
+                      child: Text(
                         '${formatRupiah(build.total)} / ${formatRupiah(build.budget)}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: MonexColors.textDark,
+                            ),
+                        textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
