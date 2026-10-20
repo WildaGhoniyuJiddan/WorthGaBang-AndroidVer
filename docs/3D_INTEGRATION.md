@@ -95,6 +95,20 @@ kecil daripada GLB per part.
 
 D banding: 180 MB → 1,69 MB (**−99,1 %**).
 
+### Aset mentah tidak ada di repo
+
+`assets/3d/*` mentah (85 GLB Draco, ±180 MB) **dihapus dari repo** dan di-ignore.
+Yang tetap di repo hanya `assets/3d/prepared/` (1,69 MB) — itu yang dibundel ke
+APK. `.gitignore` memuat:
+
+```gitignore
+assets/3d/*
+!assets/3d/prepared/
+```
+
+Untuk regenerate: unduh GLB BuildCores ke `assets/3d/`, lalu jalankan
+`node tool/prepare_3d.mjs`. Pipeline butuh `npm install` di `tool/`.
+
 ---
 
 ## 3. Reactive state binding
@@ -180,8 +194,11 @@ Fallback **tidak pernah membuat crash**: semua jalur error berakhir di
 | A4 | Normalizer | panjang normal | 1,0 ±0,01 | ✅ |
 | A5 | Budget triangle scene | jumlah tri | < 60k | ✅ 66,1k total katalog; satu scene < 40k |
 | A6 | Budget ukuran aset | `du assets/3d/prepared` | < 2 MB | ✅ 1,69 MB |
-| A7 | APK release | `flutter build apk --release` | build sukses | ✅ |
+| A7 | APK release | `flutter build apk --release` | build sukses | ✅ 66,0 MB, plugin native compile |
 | A8 | Overflow 320 px | `test/monex/monex_overflow_test.dart` | 0 overflow | ✅ |
+| A9 | Aset 3D di APK | `unzip -l app-release.apk` | hanya `prepared/` | ✅ 1.695.899 B; raw 0 B |
+| A10 | Raw 3D di repo | `git ls-tree -r origin/main` | 0 file mentah | ✅ 17 file, semua `prepared/` |
+| A11 | Ukuran repo | `du -sh .git` | < 40 MB | ✅ 27 MB (dari 101 MB) |
 
 ### 7.2 Manual (perlu perangkat)
 
